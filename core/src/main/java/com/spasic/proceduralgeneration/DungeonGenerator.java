@@ -1,7 +1,8 @@
 package com.spasic.proceduralgeneration;
 
 import com.badlogic.gdx.Gdx;
-import com.spasic.proceduralgeneration.oldCode.PRNG;
+import com.badlogic.gdx.math.Vector2;
+import com.spasic.proceduralgeneration.PRNG;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,7 +12,7 @@ import java.util.ArrayList;
 @Setter
 public class DungeonGenerator {
 
-    public enum dungeonType { SRP, BSP, CA }
+    public enum dungeonType { SRP, BSP, CA, DLA }
 
     private dungeonType type;
     //Map
@@ -42,11 +43,23 @@ public class DungeonGenerator {
         this.maxRow = maxRow;
     }
 
-    public Node[][] generateDungeon(int maxCol, int maxRow, int numberOfRooms){
+
+    public Node [][] generateDungeonDLA(int maxCol, int maxRow, int numberOfWalkers){
+        this.currentCol = maxCol;
+        this.currentRow = maxRow;
+        map = new Node[currentCol][currentRow];
+        createNodes();
+        walk(numberOfWalkers);
+
+
+        return map;
+    }
+
+    public Node[][] generateDungeonSRP(int maxCol, int maxRow, int numberOfRooms){
         this.currentCol = maxCol;
         this.currentRow = maxRow;
         this.numberOfRooms = numberOfRooms;
-        resetParameters();
+        resetParametersSRP();
         map = new Node[currentCol][currentRow];
         createNodes();
         placeRoomsSRP();
@@ -65,7 +78,7 @@ public class DungeonGenerator {
         return map;
     }
 
-    private void resetParameters(){
+    private void resetParametersSRP(){
         currentNode = null;
         goalNode = null;
         startNode = null;
@@ -133,25 +146,38 @@ public class DungeonGenerator {
     public void placeEntrancesSRP(Room currentRoom){
         switch (currentRoom.entrance1) {
             case NORTH ->
-                map[currentRoom.x + com.spasic.proceduralgeneration.oldCode.PRNG.random.nextInt(1, currentRoom.width - 1)][currentRoom.y].setAsEntrance();
+                map[currentRoom.x + PRNG.distinctRandom.nextInt(1, currentRoom.width - 1)][currentRoom.y].setAsEntrance();
             case SOUTH ->
-                map[currentRoom.x + com.spasic.proceduralgeneration.oldCode.PRNG.random.nextInt(1, currentRoom.width - 1)][currentRoom.y + currentRoom.length - 1].setAsEntrance();
+                map[currentRoom.x + PRNG.distinctRandom.nextInt(1, currentRoom.width - 1)][currentRoom.y + currentRoom.length - 1].setAsEntrance();
             case EAST ->
-                map[currentRoom.x][currentRoom.y + com.spasic.proceduralgeneration.oldCode.PRNG.random.nextInt(1, currentRoom.length - 1)].setAsEntrance();
+                map[currentRoom.x][currentRoom.y + PRNG.distinctRandom.nextInt(1, currentRoom.length - 1)].setAsEntrance();
             case WEST ->
-                map[currentRoom.x + currentRoom.width - 1][currentRoom.y + com.spasic.proceduralgeneration.oldCode.PRNG.random.nextInt(1, currentRoom.width - 1)].setAsEntrance();
+                map[currentRoom.x + currentRoom.width - 1][currentRoom.y + PRNG.distinctRandom.nextInt(1, currentRoom.width - 1)].setAsEntrance();
         }
         if(currentRoom.entrance2 != null){
             switch (currentRoom.entrance2) {
                 case NORTH ->
-                    map[currentRoom.x + com.spasic.proceduralgeneration.oldCode.PRNG.random.nextInt(1, currentRoom.width - 1)][currentRoom.y].setAsEntrance();
+                    map[currentRoom.x + PRNG.distinctRandom.nextInt(1, currentRoom.width - 1)][currentRoom.y].setAsEntrance();
                 case SOUTH ->
-                    map[currentRoom.x + com.spasic.proceduralgeneration.oldCode.PRNG.random.nextInt(1, currentRoom.width - 1)][currentRoom.y + currentRoom.length - 1].setAsEntrance();
+                    map[currentRoom.x + PRNG.distinctRandom.nextInt(1, currentRoom.width - 1)][currentRoom.y + currentRoom.length - 1].setAsEntrance();
                 case EAST ->
-                    map[currentRoom.x][currentRoom.y + com.spasic.proceduralgeneration.oldCode.PRNG.random.nextInt(1, currentRoom.length - 1)].setAsEntrance();
+                    map[currentRoom.x][currentRoom.y + PRNG.distinctRandom.nextInt(1, currentRoom.length - 1)].setAsEntrance();
                 case WEST ->
-                    map[currentRoom.x + currentRoom.width - 1][currentRoom.y + PRNG.random.nextInt(1, currentRoom.width - 1)].setAsEntrance();
+                    map[currentRoom.x + currentRoom.width - 1][currentRoom.y + PRNG.distinctRandom.nextInt(1, currentRoom.width - 1)].setAsEntrance();
             }
+        }
+    }
+
+
+    /*
+    This part of the code is used by generateDungeonDLA
+     */
+
+    public void walk(int numberOfWalkers){
+        for(int i = 0; i < numberOfWalkers; i++){
+            int x = PRNG.distinctRandom.nextInt(0, currentCol + 1);
+            int y = PRNG.distinctRandom.nextInt(0, currentRow + 1);
+            Vector2 walker = new Vector2(PRNG.distinctRandom.nextFloat(), PRNG.distinctRandom.nextFloat());
         }
     }
 

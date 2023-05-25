@@ -57,6 +57,9 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     public static int col = maxCol;
     public static int row = maxRow;
 
+    //DLA
+    public static int numberOfWalkers = 100;
+
     //Node
     private Node[][] map;
     private Node[][] mapTest;
@@ -158,19 +161,6 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     private void createUI(){
         group = new Group();
 
-        //Generate button
-        final TextButton generateButton = new TextButton("Generate", skin);
-        generateButton.setBounds(Gdx.graphics.getWidth() * 0.83f, Gdx.graphics.getHeight() * 0.2f,
-            Gdx.graphics.getWidth() * 0.06f, Gdx.graphics.getHeight() * 0.06f);
-        generateButton.setName("generateBtn");
-        generateButton.addListener( new ClickListener(){
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                //Arrays.fill(map, null);
-                map = dungeonGenerator.generateDungeon(col, row, numberOfRooms);
-            }
-        });
-
         // General settings label
         final Label generalSettingsLabel = new Label("General Settings", skin);
         generalSettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.95f,
@@ -248,6 +238,31 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         generationSelectBox.setItems(items);
         generationSelectBox.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.71f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+        generationSelectBox.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                dungeonGenerator.setType(generationSelectBox.getSelected());
+            }
+        });
+
+        //Generate button
+        final TextButton generateButton = new TextButton("Generate", skin);
+        generateButton.setBounds(Gdx.graphics.getWidth() * 0.83f, Gdx.graphics.getHeight() * 0.2f,
+            Gdx.graphics.getWidth() * 0.06f, Gdx.graphics.getHeight() * 0.06f);
+        generateButton.setName("generateBtn");
+        generateButton.addListener( new ClickListener(){
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                //Arrays.fill(map, null);
+                if(generationSelectBox.getSelected() == DungeonGenerator.dungeonType.SRP){
+                    map = dungeonGenerator.generateDungeonSRP(col, row, numberOfRooms);
+                }
+                else if(generationSelectBox.getSelected() == DungeonGenerator.dungeonType.DLA){
+                    map = dungeonGenerator.generateDungeonDLA(col, row, numberOfWalkers);
+                }
+
+            }
+        });
 
 
 

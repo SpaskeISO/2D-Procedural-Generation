@@ -47,6 +47,8 @@ public class Node{
     @ToString.Include
     private boolean connected = false;
 
+    private boolean walker = false;
+
     private Color color;
     private Color foregroundColor;
     //private Rectangle boundingBox;
