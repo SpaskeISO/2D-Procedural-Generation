@@ -2,7 +2,6 @@ package com.spasic.proceduralgeneration;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.scenes.scene2d.Actor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -16,10 +15,12 @@ public class Node{
     private Node nodeParent;
     private String text;
     private Rectangle boundigbox;
+    // Location
     @ToString.Include
      private Integer col;
     @ToString.Include
     private Integer row;
+    // A* pathfinding parameters
     @ToString.Include
     private Integer gCost;
     @ToString.Include
@@ -47,7 +48,10 @@ public class Node{
     @ToString.Include
     private boolean connected = false;
 
+    //DLA parameters
+
     private boolean walker = false;
+    private boolean caveDLA = false;
 
     private Color color;
     private Color foregroundColor;
@@ -144,6 +148,28 @@ public class Node{
         }
         foregroundColor = Color.BLACK;
         setPath(true);
-        System.out.println(this);
+        //System.out.println(this);
+    }
+
+    public void setAsWalker(){
+        color = Color.BLACK;
+        setWalker(true);
+
+    }
+
+    public void setAsCaveDLA(){
+        color = Color.BLUE;
+        setWalker(false);
+        setCaveDLA(true);
+    }
+
+    public void setAsNotCaveDLA(){
+        color = Color.WHITE;
+        setCaveDLA(false);
+    }
+
+    public void setAsNotWalker(){
+        color = Color.WHITE;
+        setWalker(false);
     }
 }

@@ -1,8 +1,6 @@
 package com.spasic.proceduralgeneration;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.math.Vector2;
-import com.spasic.proceduralgeneration.PRNG;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -94,12 +92,6 @@ public class DungeonGenerator {
                 map[x][y] = new Node(x,y);
             }
         }
-        /*for(int x = 0; x < currentCol; x++){
-            for(int y = 0; y < currentRow; y++){
-                map[x][y].getBoundigbox().setPosition(x * 11.25f, y * 17.25f);
-                map[x][y].getBoundigbox().setSize(11.25f, 17.25f);
-            }
-        }*/
         for(int x = 0; x < currentCol; x++){
             for(int y = 0; y < currentRow; y++){
                 map[x][y].getBoundigbox().setPosition(x * Gdx.graphics.getWidth() * 0.008f,
@@ -174,10 +166,39 @@ public class DungeonGenerator {
      */
 
     public void walk(int numberOfWalkers){
-        for(int i = 0; i < numberOfWalkers; i++){
-            int x = PRNG.distinctRandom.nextInt(0, currentCol + 1);
-            int y = PRNG.distinctRandom.nextInt(0, currentRow + 1);
-            Vector2 walker = new Vector2(PRNG.distinctRandom.nextFloat(), PRNG.distinctRandom.nextFloat());
+        int centerX = currentCol / 2;
+        int centerY = currentRow / 2;
+        map[centerX][centerY].setAsCaveDLA();
+        int x;
+        int y;
+        int moveX;
+        int moveY;
+        for(int i = 0; i < numberOfWalkers; i++) {
+            do {
+                x = PRNG.distinctRandom.nextInt(0, currentCol);
+                y = PRNG.distinctRandom.nextInt(0, currentRow);
+            } while (map[x][y].isCaveDLA());
+            map[x][y].setAsWalker();
+            while(true){
+                if(map[Math.max(0, x-1)][y].isCaveDLA() || map[Math.min(x+1, currentCol - 1)][y].isCaveDLA()
+                    || map[x][Math.max(0, y-1 )].isCaveDLA() || map[x][Math.min(y+1, currentRow - 1)].isCaveDLA()){
+                    map[x][y].setAsCaveDLA();
+                    break;
+                }
+                moveX = PRNG.distinctRandom.nextInt(-1,2);
+                moveY = PRNG.distinctRandom.nextInt(-1, 2);
+                //System.out.println("moveX: " + moveX + "|| moveY: " + moveY);
+                //System.out.println("x: " + x + "|| y: " + y);
+                if( (x + moveX) >= 0 && (x + moveX) < currentCol && (y + moveY) >= 0 && (y + moveY) < currentRow){
+                    map[x][y].setAsNotWalker();
+                    x += moveX;
+                    y += moveY;
+                    map[x][y].setAsWalker();
+                }
+            }
+
+
+
         }
     }
 

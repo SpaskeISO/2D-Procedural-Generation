@@ -58,7 +58,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     public static int row = maxRow;
 
     //DLA
-    public static int numberOfWalkers = 100;
+    public static int numberOfWalkers = 700;
 
     //Node
     private Node[][] map;
