@@ -39,14 +39,14 @@ public class Room {
 
     public boolean checkCollision(Node Nodes[][]){
         if(this.x + this.width > ProceduralGeneration2D.col - 1 || this.y + this.length > ProceduralGeneration2D.row - 1 || this.x - 1 < 0 || this.y - 1 < 0){
-            System.out.println("Out of bounds");
+            //System.out.println("Out of bounds");
             return false;
         }
 
         for(int i = Math.max(this.x - 2, 0); i < Math.min(this.width + this.x + 2, ProceduralGeneration2D.col); i++){
             for(int j = Math.max(this.y - 2, 0); j < Math.min(this.length + this.y + 2, ProceduralGeneration2D.row); j++){
                 if(Nodes[i][j].isRoom()){
-                    System.out.println("Collision");
+                    //System.out.println("Collision");
                     return false;
                 }
             }

@@ -59,7 +59,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
 
     //DLA
     public static int minNumberOfWalkers = minCol * minRow;
-    public static int maxNumberOfWalkers = maxCol * maxRow;
+    public static int maxNumberOfWalkers = col * row;
     public static int numberOfWalkers = 1700;
     public static float minStickiness = 0.1f;
     public static float maxStickiness = 1f;
@@ -189,6 +189,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
             public void changed(ChangeEvent event, Actor actor) {
                 col = (int)colSlider.getValue();
                 colLabel.setText("Columns: " + col);
+                DLAScrollerDynamicNumbers();
             }
         });
         colSlider.setName("colSlider");
@@ -207,6 +208,8 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
             public void changed(ChangeEvent event, Actor actor) {
                 row = (int)rowSlider.getValue();
                 rowLabel.setText("Rows: " + row);
+                DLAScrollerDynamicNumbers();
+
             }
         });
         rowSlider.setName("rowSlider");
@@ -275,7 +278,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
 
         final Label DLASettingsLabel = new Label("DLA Settings: ", skin);
 
-        final Label stickinessLabel = new Label("Stickiness: " + stickiness, skin);
+        final Label stickinessLabel = new Label(String.format("Stickiness: %.2f", stickiness), skin);
 
         final Slider stickinessSlider = new Slider(minStickiness, maxStickiness, 0.01f, false, skin);
         stickinessSlider.setValue(stickiness);
@@ -283,7 +286,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 stickiness = stickinessSlider.getValue();
-                stickinessLabel.setText("Stickiness: " + stickiness);
+                stickinessLabel.setText(String.format("Stickiness: %.2f", stickiness));
             }
         });
 
@@ -374,6 +377,19 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
 
 
+    }
+
+    private void DLAScrollerDynamicNumbers(){
+        if(col * row == 200){
+            minNumberOfWalkers = 0;
+            maxNumberOfWalkers = 199;
+        }
+        else {
+            minNumberOfWalkers = minCol * minRow;
+            maxNumberOfWalkers = col * row - 1;
+        }
+        Slider slider = (Slider) DLAGroup.getChild(2);
+        slider.setRange(minNumberOfWalkers, maxNumberOfWalkers);
     }
 
     private void resizeMap(){

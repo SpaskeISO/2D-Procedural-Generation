@@ -179,7 +179,8 @@ public class DungeonGenerator {
                 y = PRNG.distinctRandom.nextInt(0, currentRow);
             } while (map[x][y].isCaveDLA());
             map[x][y].setAsWalker();
-            while(true){
+            int tries = 0;
+            while(tries < 10000){
                 if((map[Math.max(0, x-1)][y].isCaveDLA() || map[Math.min(x+1, currentCol - 1)][y].isCaveDLA()
                     || map[x][Math.max(0, y-1 )].isCaveDLA() || map[x][Math.min(y+1, currentRow - 1)].isCaveDLA())
                     && PRNG.distinctRandom.nextFloat() <= stickiness){
@@ -201,10 +202,13 @@ public class DungeonGenerator {
                     y += moveY;
                     map[x][y].setAsWalker();
                 }
+                tries++;
             }
-
-
-
+        }
+        for(int i = 0; i < map.length; i++){
+            for(int j = 0; j < map[0].length; j++){
+                if(map[i][j].isWalker()) map[i][j].setAsNotWalker();
+            }
         }
     }
 
@@ -306,67 +310,42 @@ public class DungeonGenerator {
                 current.setAsPath();
             }
 
-            if(current.getNodeParent() != null)System.out.println(current.getNodeParent());
-            else System.out.println("Parent is null");
+            //if(current.getNodeParent() != null)System.out.println(current.getNodeParent());
+            //else System.out.println("Parent is null");
         }
         //System.out.println("track the path finished");
     }
 
     public void autoSearch(){
-        //System.out.println("Entered Auto search");
         while(!goalReached){
 
             int col = currentNode.getCol();
             int row = currentNode.getRow();
-            //System.out.println("Col and Row set");
 
             currentNode.setAsChecked();
             checkedList.add(currentNode);
             openList.remove(currentNode);
-            //System.out.println("Lists manipulated");
-            //System.out.println(openList.size());
 
             //Check node in UP, DOWN, LEFT, RIGHT
-            System.out.println(col + " : " + row);
             if(row - 1 >= 0){
-                if(openNode(map[col][row-1])){
-                    //System.out.println("Node opened SOUTH");
-                }
-                else {
-                    //System.out.println("Node not opened SOUTH");
-                }
+                openNode(map[col][row-1]);
             }
             if(col-1 >= 0){
-                if(openNode(map[col-1][row])){
-                    //System.out.println("Node opened WEST");
-                }
-                else {
-                    //System.out.println("Node not opened WEST");
-                }
+                openNode(map[col-1][row]);
+
             }
             if(row + 1 < currentRow){
-                if(openNode(map[col][row+1])){
-                    //System.out.println("Node opened NORTH");
-                }
-                else {
-                    //System.out.println("Node not opened NORTH");
-                }
+                openNode(map[col][row+1]);
+
             }
             if(col + 1 < currentCol){
-                if(openNode(map[col+1][row])){
-                    //System.out.println("Node opened EAST");
-                }
-                else {
-                    //System.out.println("Node not opened EAST");
-                }
+                openNode(map[col+1][row]);
             }
-            //System.out.println("Opening nodes");
 
             //Find the best node
             int bestNodeIndex = 0;
             int bestNodeFCost = 99999;
 
-            //System.out.println("Fidning best node");
             for(int i = 0; i < openList.size(); i++){
                 //Check if the F cost is better
                 if(openList.get(i).getFCost() < bestNodeFCost){
@@ -385,13 +364,11 @@ public class DungeonGenerator {
             if(openList.size() == 0){
                 break;
             }
-            //System.out.println("Finding best node finished");
 
             currentNode = openList.get(bestNodeIndex);
             if(currentNode == goalNode){
                 goalReached = true;
                 startNode.setConnected(true);
-                System.out.println("Goal node reached");
                 trackThePath();
             }
 
@@ -410,10 +387,6 @@ public class DungeonGenerator {
                 }
             }
         }
-        for(Node node : entrancesList){
-            System.out.println(node);
-        }
-        System.out.println(entrancesList.size());
 
         int entrancesConnected = 0;
         while(entrancesConnected < entrancesList.size() - 1){
@@ -440,7 +413,6 @@ public class DungeonGenerator {
 
             goalReached = false;
 
-            System.out.println(entrancesConnected + 1 + " entrance connected");
             entrancesConnected++;
 
 
