@@ -58,7 +58,12 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     public static int row = maxRow;
 
     //DLA
-    public static int numberOfWalkers = 700;
+    public static int minNumberOfWalkers = minCol * minRow;
+    public static int maxNumberOfWalkers = maxCol * maxRow;
+    public static int numberOfWalkers = 1700;
+    public static float minStickiness = 0.1f;
+    public static float maxStickiness = 1f;
+    public static float stickiness = 0.5f;// min 0.1 max 1
 
     //Node
     private Node[][] map;
@@ -66,7 +71,8 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
 
 
     //UI
-    private Group group;
+    private Group generalSettingsGroup;
+    private Group DLAGroup;
 
     private ShapeRenderer shapeRenderer;
 
@@ -159,23 +165,24 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     }
 
     private void createUI(){
-        group = new Group();
+        generalSettingsGroup = new Group();
+        DLAGroup = new Group();
 
         // General settings label
-        final Label generalSettingsLabel = new Label("General Settings", skin);
-        generalSettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.95f,
-            Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);
+        final Label generalSettingsLabel = new Label("General Settings:", skin);
+        /*generalSettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.95f,
+            Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);*/
 
         // Columns Label
         final Label colLabel = new Label( "Columns: " + col, skin);
-        colLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() * 0.92f,
-            Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);
+        /*colLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() * 0.92f,
+            Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);*/
         colLabel.setName("colLabel");
 
         // Columns Slider
         final Slider colSlider = new Slider( (float)minCol, (float)maxCol, 1.0f, false,skin);
-        colSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.92f,
-            Gdx.graphics.getWidth()* 0.1f, Gdx.graphics.getHeight() * 0.03f);
+        /*colSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.92f,
+            Gdx.graphics.getWidth()* 0.1f, Gdx.graphics.getHeight() * 0.03f);*/
         colSlider.setValue((float)maxCol);
         colSlider.addListener(new ChangeListener() {
             @Override
@@ -188,15 +195,13 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
 
         // Row Label
         final Label rowLabel = new Label("Rows: " + row, skin);
-        rowLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() *  0.89f,
-            Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);
+        /*rowLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() *  0.89f,
+            Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);*/
         rowLabel.setName("rowLabel");
 
         // Row Slider
         final Slider rowSlider = new Slider( (float)minRow, (float)maxRow, 1.0f, false, skin);
         rowSlider.setValue((float)maxRow);
-        rowSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.89f,
-            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
         rowSlider.addListener( new ChangeListener(){
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -207,15 +212,11 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         rowSlider.setName("rowSlider");
 
         final Label roomLabel = new Label("Rooms: " + numberOfRooms, skin);
-        roomLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() *  0.86f,
-            Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);
         roomLabel.setName("roomLabel");
 
         // Rooms Slider
         final Slider roomSlider = new Slider((float)minNumberOfRooms, (float)maxNumberOfRooms, 1.0f, false, skin);
         roomSlider.setValue((float)numberOfRooms);
-        roomSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.86f,
-            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
         roomSlider.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -226,8 +227,6 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         roomSlider.setName("roomSlider");
 
         final Label generationSelectLabel = new Label("Generation Selection:", skin);
-        generationSelectLabel.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.74f,
-            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
 
         // SelectBox for choosing witch dungeon algorithm to use
         final SelectBox<DungeonGenerator.dungeonType> generationSelectBox = new SelectBox<DungeonGenerator.dungeonType>(skin, "mine");
@@ -236,19 +235,17 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
             items.add(type);
         }
         generationSelectBox.setItems(items);
-        generationSelectBox.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.71f,
-            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
         generationSelectBox.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 dungeonGenerator.setType(generationSelectBox.getSelected());
+                /*switch (generationSelectBox.getSelected()){
+                }*/
             }
         });
 
         //Generate button
         final TextButton generateButton = new TextButton("Generate", skin);
-        generateButton.setBounds(Gdx.graphics.getWidth() * 0.83f, Gdx.graphics.getHeight() * 0.2f,
-            Gdx.graphics.getWidth() * 0.06f, Gdx.graphics.getHeight() * 0.06f);
         generateButton.setName("generateBtn");
         generateButton.addListener( new ClickListener(){
             @Override
@@ -258,63 +255,122 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
                     map = dungeonGenerator.generateDungeonSRP(col, row, numberOfRooms);
                 }
                 else if(generationSelectBox.getSelected() == DungeonGenerator.dungeonType.DLA){
-                    map = dungeonGenerator.generateDungeonDLA(col, row, numberOfWalkers);
+                    map = dungeonGenerator.generateDungeonDLA(col, row, numberOfWalkers, stickiness);
                 }
 
+            }
+        });
+
+        final Label numberOfWalkersLabel = new Label("Walkers: " + numberOfWalkers, skin);
+
+        final Slider numberOfWalkersSlider = new Slider(minNumberOfWalkers, maxNumberOfWalkers, 1.0f, false, skin);
+        numberOfWalkersSlider.setValue(numberOfWalkers);
+        numberOfWalkersSlider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                numberOfWalkers = (int) Math.floor(numberOfWalkersSlider.getValue());
+                numberOfWalkersLabel.setText("Walkers: " + numberOfWalkers);
+            }
+        });
+
+        final Label DLASettingsLabel = new Label("DLA Settings: ", skin);
+
+        final Label stickinessLabel = new Label("Stickiness: " + stickiness, skin);
+
+        final Slider stickinessSlider = new Slider(minStickiness, maxStickiness, 0.01f, false, skin);
+        stickinessSlider.setValue(stickiness);
+        stickinessSlider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                stickiness = stickinessSlider.getValue();
+                stickinessLabel.setText("Stickiness: " + stickiness);
             }
         });
 
 
 
 
+        generalSettingsGroup.addActor(generateButton);
+        generalSettingsGroup.addActor(generalSettingsLabel);
+        generalSettingsGroup.addActor(colSlider);
+        generalSettingsGroup.addActor(colLabel);
+        generalSettingsGroup.addActor(rowSlider);
+        generalSettingsGroup.addActor(rowLabel);
+        generalSettingsGroup.addActor(roomSlider);
+        generalSettingsGroup.addActor(roomLabel);
+        generalSettingsGroup.addActor(generationSelectLabel);
+        generalSettingsGroup.addActor(generationSelectBox);
 
-        group.addActor(generateButton);
-        group.addActor(generalSettingsLabel);
-        group.addActor(colSlider);
-        group.addActor(colLabel);
-        group.addActor(rowSlider);
-        group.addActor(rowLabel);
-        group.addActor(roomSlider);
-        group.addActor(roomLabel);
-        group.addActor(generationSelectLabel);
-        group.addActor(generationSelectBox);
-        stage.addActor(group);
+
+        DLAGroup.addActor(DLASettingsLabel);
+        DLAGroup.addActor(numberOfWalkersLabel);
+        DLAGroup.addActor(numberOfWalkersSlider);
+        DLAGroup.addActor(stickinessLabel);
+        DLAGroup.addActor(stickinessSlider);
+
+        resizeUI();
+
+        stage.addActor(generalSettingsGroup);
+        stage.addActor(DLAGroup);
     }
 
     private void resizeUI(){
-        Array<Actor> actors = group.getChildren();
-        Button generateButton = (Button) actors.get(0);
-        Label generalSettingsLabel = (Label) actors.get(1);
-        Slider colSlider = (Slider) actors.get(2);
-        Label colLabel = (Label) actors.get(3);
-        Slider rowSlider = (Slider) actors.get(4);
-        Label rowLabel = (Label) actors.get(5);
-        Slider roomSlider = (Slider) actors.get(6);
-        Label roomLabel = (Label) actors.get(7);
-        Label generationSelectLabel = (Label) actors.get(8);
-        Actor generationSelectBox = actors.get(9);
+
+        Button generateButton = (Button) generalSettingsGroup.getChild(0);
+        Label generalSettingsLabel = (Label) generalSettingsGroup.getChild(1);
+        Slider colSlider = (Slider) generalSettingsGroup.getChild(2);
+        Label colLabel = (Label) generalSettingsGroup.getChild(3);
+        Slider rowSlider = (Slider) generalSettingsGroup.getChild(4);
+        Label rowLabel = (Label) generalSettingsGroup.getChild(5);
+        Slider roomSlider = (Slider) generalSettingsGroup.getChild(6);
+        Label roomLabel = (Label) generalSettingsGroup.getChild(7);
+        Label generationSelectLabel = (Label) generalSettingsGroup.getChild(8);
+        Actor generationSelectBox = generalSettingsGroup.getChild(9);
+
+        Label DLASettingsLabel = (Label) DLAGroup.getChild(0);
+        Label numberOfWalkersLabel = (Label) DLAGroup.getChild(1);
+        Slider numberOfWalkersSlider = (Slider) DLAGroup.getChild(2);
+        Label stickinessLabel = (Label) DLAGroup.getChild(3);
+        Slider stickinessSlider = (Slider) DLAGroup.getChild(4);
 
 
         generalSettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.95f,
             Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);
+
         rowLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() *  0.89f,
             Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);
         rowSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.89f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+
         colSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.92f,
             Gdx.graphics.getWidth()* 0.1f, Gdx.graphics.getHeight() * 0.03f);
         colLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() * 0.92f,
             Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);
+
         generateButton.setBounds(Gdx.graphics.getWidth() * 0.83f, Gdx.graphics.getHeight() * 0.2f,
             Gdx.graphics.getWidth() * 0.06f, Gdx.graphics.getHeight() * 0.06f);
+
         roomSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.86f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
         roomLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() *  0.86f,
             Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);
-        generationSelectLabel.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.74f,
+
+        generationSelectLabel.setBounds(Gdx.graphics.getWidth() * 0.62f, Gdx.graphics.getHeight() * 0.95f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
-        generationSelectBox.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.71f,
+        generationSelectBox.setBounds(Gdx.graphics.getWidth() * 0.62f, Gdx.graphics.getHeight() * 0.92f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+
+        numberOfWalkersLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() * 0.76f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+        numberOfWalkersSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.76f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+
+        stickinessLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() * 0.73f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+        stickinessSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.73f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+
+
     }
 
     private void resizeMap(){

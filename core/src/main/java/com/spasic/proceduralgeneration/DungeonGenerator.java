@@ -42,12 +42,12 @@ public class DungeonGenerator {
     }
 
 
-    public Node [][] generateDungeonDLA(int maxCol, int maxRow, int numberOfWalkers){
+    public Node [][] generateDungeonDLA(int maxCol, int maxRow, int numberOfWalkers, float stickiness){
         this.currentCol = maxCol;
         this.currentRow = maxRow;
         map = new Node[currentCol][currentRow];
         createNodes();
-        walk(numberOfWalkers);
+        walk(numberOfWalkers, stickiness);
 
 
         return map;
@@ -165,7 +165,7 @@ public class DungeonGenerator {
     This part of the code is used by generateDungeonDLA
      */
 
-    public void walk(int numberOfWalkers){
+    public void walk(int numberOfWalkers, float stickiness){
         int centerX = currentCol / 2;
         int centerY = currentRow / 2;
         map[centerX][centerY].setAsCaveDLA();
@@ -180,16 +180,22 @@ public class DungeonGenerator {
             } while (map[x][y].isCaveDLA());
             map[x][y].setAsWalker();
             while(true){
-                if(map[Math.max(0, x-1)][y].isCaveDLA() || map[Math.min(x+1, currentCol - 1)][y].isCaveDLA()
-                    || map[x][Math.max(0, y-1 )].isCaveDLA() || map[x][Math.min(y+1, currentRow - 1)].isCaveDLA()){
+                if((map[Math.max(0, x-1)][y].isCaveDLA() || map[Math.min(x+1, currentCol - 1)][y].isCaveDLA()
+                    || map[x][Math.max(0, y-1 )].isCaveDLA() || map[x][Math.min(y+1, currentRow - 1)].isCaveDLA())
+                    && PRNG.distinctRandom.nextFloat() <= stickiness){
+                    map[x][y].setAsNotWalker();
                     map[x][y].setAsCaveDLA();
                     break;
                 }
-                moveX = PRNG.distinctRandom.nextInt(-1,2);
-                moveY = PRNG.distinctRandom.nextInt(-1, 2);
+                do {
+                    moveX = PRNG.distinctRandom.nextInt(-1,2);
+                    moveY = PRNG.distinctRandom.nextInt(-1, 2);
+
+                } while (!((x + moveX) >= 0 && (x + moveX) < currentCol && (y + moveY) >= 0 && (y + moveY) < currentRow));
+
                 //System.out.println("moveX: " + moveX + "|| moveY: " + moveY);
                 //System.out.println("x: " + x + "|| y: " + y);
-                if( (x + moveX) >= 0 && (x + moveX) < currentCol && (y + moveY) >= 0 && (y + moveY) < currentRow){
+                if(!map[x+moveX][y+moveY].isCaveDLA()){
                     map[x][y].setAsNotWalker();
                     x += moveX;
                     y += moveY;
