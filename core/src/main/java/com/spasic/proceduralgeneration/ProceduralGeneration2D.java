@@ -360,6 +360,9 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         generationSelectBox.setBounds(Gdx.graphics.getWidth() * 0.62f, Gdx.graphics.getHeight() * 0.92f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
 
+        DLASettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.79f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+
         numberOfWalkersLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() * 0.76f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
         numberOfWalkersSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.76f,
