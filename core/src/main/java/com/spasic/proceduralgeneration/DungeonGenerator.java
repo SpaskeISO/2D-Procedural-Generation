@@ -47,6 +47,19 @@ public class DungeonGenerator {
         this.currentRow = maxRow;
         map = new Node[currentCol][currentRow];
         createNodes();
+        setStartNodesDLA();
+        walk(numberOfWalkers, stickiness);
+
+
+        return map;
+    }
+
+    public Node [][] generateDungeonDLA(int maxCol, int maxRow, int numberOfWalkers, float stickiness, int numberOfStartNodes){
+        this.currentCol = maxCol;
+        this.currentRow = maxRow;
+        map = new Node[currentCol][currentRow];
+        createNodes();
+        setStartNodesDLA(numberOfStartNodes);
         walk(numberOfWalkers, stickiness);
 
 
@@ -123,7 +136,7 @@ public class DungeonGenerator {
                     }
                     placeEntrancesSRP(currentRoom);
                     addedRooms++;
-                    System.out.println("Room placed");
+                    //System.out.println("Room placed");
                     Room.id++;
                 }
                 if(!noCollsions) collisionCounter++;
@@ -165,10 +178,35 @@ public class DungeonGenerator {
     This part of the code is used by generateDungeonDLA
      */
 
-    public void walk(int numberOfWalkers, float stickiness){
+    public void setStartNodesDLA(){
         int centerX = currentCol / 2;
         int centerY = currentRow / 2;
         map[centerX][centerY].setAsCaveDLA();
+    }
+
+    public void setStartNodesDLA(int numberOfStartNodes){
+        if(numberOfStartNodes == 1){
+            int x = currentCol / 2;
+            int y = currentRow / 2;
+            map[0][y].setAsCaveDLA();
+            map[currentCol - 1][y].setAsCaveDLA();
+            map[x][0].setAsCaveDLA();
+            map[x][currentRow - 1].setAsCaveDLA();
+        }
+        else{
+            int x = currentCol / numberOfStartNodes;
+            int y = currentRow / numberOfStartNodes;
+            for(int i = 1; i <= numberOfStartNodes; i++){
+                map[0][Math.min(currentRow - 1, (y * i) - (y / 2))].setAsCaveDLA();
+                map[currentCol - 1][Math.min(currentRow - 1, (y * i) - (y / 2))].setAsCaveDLA();
+                map[Math.min((x * i) - (x / 2), currentCol - 1)][0].setAsCaveDLA();
+                map[Math.min((x * i) - (x / 2), currentCol - 1)][currentRow - 1].setAsCaveDLA();
+            }
+        }
+
+    }
+
+    public void walk(int numberOfWalkers, float stickiness){
         int x;
         int y;
         int moveX;
@@ -283,20 +321,14 @@ public class DungeonGenerator {
     }
 
     /**
-     *
-     *
-     *
      * @param node
-     * @return
      */
-    public boolean openNode(Node node){
-        if(node.isOpen() == false && node.isChecked() == false && node.isSolid() == false){
+    public void openNode(Node node){
+        if(!node.isOpen() && !node.isChecked() && !node.isSolid()){
             node.setAsOpen();
             node.setNodeParent(currentNode);
             openList.add(node);
-            return true;
         }
-        return false;
     }
 
     public void trackThePath(){
@@ -374,9 +406,6 @@ public class DungeonGenerator {
 
         }
     }
-
-
-
 
     public void connectEntrances(){
 

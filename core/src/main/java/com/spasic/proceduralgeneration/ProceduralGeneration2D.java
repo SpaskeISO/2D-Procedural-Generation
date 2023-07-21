@@ -17,6 +17,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.StringBuilder;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
@@ -64,6 +65,10 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     public static float minStickiness = 0.1f;
     public static float maxStickiness = 1f;
     public static float stickiness = 0.5f;// min 0.1 max 1
+    public static float minEdgeStartNumber = 1.0f;
+    public static float maxEdgeStartNumber = 10.0f;
+    public static float edgeStartNumber = 4.0f;
+
 
     //Node
     private Node[][] map;
@@ -165,8 +170,17 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     }
 
     private void createUI(){
+        createGeneralSettingsUI();
+        createDLAUI();
+
+
+
+        resizeUI();
+
+    }
+
+    public void createGeneralSettingsUI(){
         generalSettingsGroup = new Group();
-        DLAGroup = new Group();
 
         // General settings label
         final Label generalSettingsLabel = new Label("General Settings:", skin);
@@ -258,15 +272,43 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
                     map = dungeonGenerator.generateDungeonSRP(col, row, numberOfRooms);
                 }
                 else if(generationSelectBox.getSelected() == DungeonGenerator.dungeonType.DLA){
-                    map = dungeonGenerator.generateDungeonDLA(col, row, numberOfWalkers, stickiness);
+                    CheckBox temp = (CheckBox) DLAGroup.getChild(5);
+                    if(temp.isChecked()){
+                        map = dungeonGenerator.generateDungeonDLA(col, row, numberOfWalkers, stickiness, (int) edgeStartNumber);
+
+                    }
+                    else{
+                        map = dungeonGenerator.generateDungeonDLA(col, row, numberOfWalkers, stickiness);
+                    }
+
                 }
 
             }
         });
 
+
+        generalSettingsGroup.addActor(generateButton);
+        generalSettingsGroup.addActor(generalSettingsLabel);
+        generalSettingsGroup.addActor(colSlider);
+        generalSettingsGroup.addActor(colLabel);
+        generalSettingsGroup.addActor(rowSlider);
+        generalSettingsGroup.addActor(rowLabel);
+        generalSettingsGroup.addActor(roomSlider);
+        generalSettingsGroup.addActor(roomLabel);
+        generalSettingsGroup.addActor(generationSelectLabel);
+        generalSettingsGroup.addActor(generationSelectBox);
+
+        stage.addActor(generalSettingsGroup);
+    }
+
+    public void createDLAUI(){
+        DLAGroup = new Group();
+
+
+
         final Label numberOfWalkersLabel = new Label("Walkers: " + numberOfWalkers, skin);
 
-        final Slider numberOfWalkersSlider = new Slider(minNumberOfWalkers, maxNumberOfWalkers, 1.0f, false, skin);
+        final Slider numberOfWalkersSlider = new Slider(minNumberOfWalkers, maxNumberOfWalkers, 10.0f, false, skin);
         numberOfWalkersSlider.setValue(numberOfWalkers);
         numberOfWalkersSlider.addListener(new ChangeListener() {
             @Override
@@ -290,30 +332,39 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
             }
         });
 
+        //Check box that changes starting points for the DLA
+        final CheckBox edgeCheckBox = new CheckBox("Edge Start", skin);
+        edgeCheckBox.setChecked(false);
+        edgeCheckBox.align(Align.left);
+        edgeCheckBox.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                Gdx.graphics.setContinuousRendering(edgeCheckBox.isChecked());
+            }
+        });
 
+        final Label edgePointNumberLabel = new Label(String.format("Edge point numbers: %.0f", edgeStartNumber), skin);
 
+        final Slider edgePointsNumberSlider = new Slider(minEdgeStartNumber, maxEdgeStartNumber, 1.0f, false, skin);
+        edgePointsNumberSlider.setValue(edgeStartNumber);
+        edgePointsNumberSlider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
 
-        generalSettingsGroup.addActor(generateButton);
-        generalSettingsGroup.addActor(generalSettingsLabel);
-        generalSettingsGroup.addActor(colSlider);
-        generalSettingsGroup.addActor(colLabel);
-        generalSettingsGroup.addActor(rowSlider);
-        generalSettingsGroup.addActor(rowLabel);
-        generalSettingsGroup.addActor(roomSlider);
-        generalSettingsGroup.addActor(roomLabel);
-        generalSettingsGroup.addActor(generationSelectLabel);
-        generalSettingsGroup.addActor(generationSelectBox);
-
+                edgeStartNumber = edgePointsNumberSlider.getValue();
+                edgePointNumberLabel.setText(String.format("Edge point numbers: %.0f", edgeStartNumber));
+            }
+        });
 
         DLAGroup.addActor(DLASettingsLabel);
         DLAGroup.addActor(numberOfWalkersLabel);
         DLAGroup.addActor(numberOfWalkersSlider);
         DLAGroup.addActor(stickinessLabel);
         DLAGroup.addActor(stickinessSlider);
+        DLAGroup.addActor(edgeCheckBox);
+        DLAGroup.addActor(edgePointNumberLabel);
+        DLAGroup.addActor(edgePointsNumberSlider);
 
-        resizeUI();
-
-        stage.addActor(generalSettingsGroup);
         stage.addActor(DLAGroup);
     }
 
@@ -335,8 +386,12 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         Slider numberOfWalkersSlider = (Slider) DLAGroup.getChild(2);
         Label stickinessLabel = (Label) DLAGroup.getChild(3);
         Slider stickinessSlider = (Slider) DLAGroup.getChild(4);
+        CheckBox edgeCheckBox = (CheckBox) DLAGroup.getChild(5);
+        Label edgePointNumberLabel = (Label) DLAGroup.getChild(6);
+        Slider edgePointsNumberSlider = (Slider) DLAGroup.getChild(7);
 
 
+        //General Settings
         generalSettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.95f,
             Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);
 
@@ -363,6 +418,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         generationSelectBox.setBounds(Gdx.graphics.getWidth() * 0.62f, Gdx.graphics.getHeight() * 0.92f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
 
+        //DLA Settings
         DLASettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.79f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
 
@@ -376,6 +432,13 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         stickinessSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.73f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
 
+        edgeCheckBox.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.70f,
+            Gdx.graphics.getWidth() * 0.08f, Gdx.graphics.getHeight() * 0.03f);
+
+        edgePointNumberLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() * 0.67f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+        edgePointsNumberSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.67f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
 
     }
 
