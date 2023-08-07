@@ -50,7 +50,7 @@ public class DungeonGenerator {
         setStartNodesDLA();
         walk(numberOfWalkers, stickiness);
 
-
+        System.out.println("Map generated");
         return map;
     }
 
@@ -62,7 +62,7 @@ public class DungeonGenerator {
         setStartNodesDLA(numberOfStartNodes);
         walk(numberOfWalkers, stickiness);
 
-
+        System.out.println("Map generated");
         return map;
     }
 
@@ -89,6 +89,18 @@ public class DungeonGenerator {
         return map;
     }
 
+    public Node[][] generateDungeonCA(int maxCol, int maxRow, int iterations, int percentage){
+        this.currentCol = maxCol;
+        this.currentRow = maxRow;
+        map = new Node[currentCol][currentRow];
+        createNodes();
+        randomiseMapCA(percentage);
+        iterateCA(iterations);
+
+        return map;
+    }
+
+
     private void resetParametersSRP(){
         currentNode = null;
         goalNode = null;
@@ -107,9 +119,9 @@ public class DungeonGenerator {
         }
         for(int x = 0; x < currentCol; x++){
             for(int y = 0; y < currentRow; y++){
-                map[x][y].getBoundigbox().setPosition(x * Gdx.graphics.getWidth() * 0.008f,
+                map[x][y].getBoundingBox().setPosition(x * Gdx.graphics.getWidth() * 0.008f,
                     y * Gdx.graphics.getHeight() * 0.015f);
-                map[x][y].getBoundigbox().setSize(Gdx.graphics.getWidth() * 0.008f, Gdx.graphics.getHeight() * 0.015f);
+                map[x][y].getBoundingBox().setSize(Gdx.graphics.getWidth() * 0.008f, Gdx.graphics.getHeight() * 0.015f);
             }
         }
     }
@@ -181,26 +193,26 @@ public class DungeonGenerator {
     public void setStartNodesDLA(){
         int centerX = currentCol / 2;
         int centerY = currentRow / 2;
-        map[centerX][centerY].setAsCaveDLA();
+        map[centerX][centerY].setCaveDLA(true);
     }
 
     public void setStartNodesDLA(int numberOfStartNodes){
         if(numberOfStartNodes == 1){
             int x = currentCol / 2;
             int y = currentRow / 2;
-            map[0][y].setAsCaveDLA();
-            map[currentCol - 1][y].setAsCaveDLA();
-            map[x][0].setAsCaveDLA();
-            map[x][currentRow - 1].setAsCaveDLA();
+            map[0][y].setCaveDLA(true);
+            map[currentCol - 1][y].setCaveDLA(true);
+            map[x][0].setCaveDLA(true);
+            map[x][currentRow - 1].setCaveDLA(true);
         }
         else{
             int x = currentCol / numberOfStartNodes;
             int y = currentRow / numberOfStartNodes;
             for(int i = 1; i <= numberOfStartNodes; i++){
-                map[0][Math.min(currentRow - 1, (y * i) - (y / 2))].setAsCaveDLA();
-                map[currentCol - 1][Math.min(currentRow - 1, (y * i) - (y / 2))].setAsCaveDLA();
-                map[Math.min((x * i) - (x / 2), currentCol - 1)][0].setAsCaveDLA();
-                map[Math.min((x * i) - (x / 2), currentCol - 1)][currentRow - 1].setAsCaveDLA();
+                map[0][Math.min(currentRow - 1, (y * i) - (y / 2))].setCaveDLA(true);
+                map[currentCol - 1][Math.min(currentRow - 1, (y * i) - (y / 2))].setCaveDLA(true);
+                map[Math.min((x * i) - (x / 2), currentCol - 1)][0].setCaveDLA(true);
+                map[Math.min((x * i) - (x / 2), currentCol - 1)][currentRow - 1].setCaveDLA(true);
             }
         }
 
@@ -216,14 +228,14 @@ public class DungeonGenerator {
                 x = PRNG.distinctRandom.nextInt(0, currentCol);
                 y = PRNG.distinctRandom.nextInt(0, currentRow);
             } while (map[x][y].isCaveDLA());
-            map[x][y].setAsWalker();
+            map[x][y].setWalker(true);
             int tries = 0;
             while(tries < 10000){
                 if((map[Math.max(0, x-1)][y].isCaveDLA() || map[Math.min(x+1, currentCol - 1)][y].isCaveDLA()
                     || map[x][Math.max(0, y-1 )].isCaveDLA() || map[x][Math.min(y+1, currentRow - 1)].isCaveDLA())
                     && PRNG.distinctRandom.nextFloat() <= stickiness){
-                    map[x][y].setAsNotWalker();
-                    map[x][y].setAsCaveDLA();
+                    map[x][y].setWalker(false);
+                    map[x][y].setCaveDLA(true);
                     break;
                 }
                 do {
@@ -235,17 +247,17 @@ public class DungeonGenerator {
                 //System.out.println("moveX: " + moveX + "|| moveY: " + moveY);
                 //System.out.println("x: " + x + "|| y: " + y);
                 if(!map[x+moveX][y+moveY].isCaveDLA()){
-                    map[x][y].setAsNotWalker();
+                    map[x][y].setWalker(false);
                     x += moveX;
                     y += moveY;
-                    map[x][y].setAsWalker();
+                    map[x][y].setWalker(true);
                 }
                 tries++;
             }
         }
         for(int i = 0; i < map.length; i++){
             for(int j = 0; j < map[0].length; j++){
-                if(map[i][j].isWalker()) map[i][j].setAsNotWalker();
+                if(map[i][j].isWalker()) map[i][j].setWalker(false);
             }
         }
     }
@@ -457,4 +469,76 @@ public class DungeonGenerator {
         }
 
     }
+
+    /*
+    This part of the code is used for Cellular Automata map generation
+     */
+
+
+    public void randomiseMapCA(int percentage){
+        for(int i = 0; i < maxCol; i++){
+            for(int j = 0; j < maxRow; j++){
+                if(percentage <= PRNG.distinctRandom.nextInt(1, 100)){
+                        map[i][j].setWallCA(true);
+                }
+            }
+        }
+    }
+
+    public void iterateCA(int iterations){
+        int neighbors = 0;
+        Node[][] temp = new Node[currentCol][currentRow];
+        for(int i = 0; i < currentCol; i++){
+            for(int j = 0; j < currentRow; j++){
+                temp[i][j] = map[i][j];
+            }
+        }
+        for(int i = 0; i < iterations; i++){
+            for(int x = 0; x < currentCol; x++){
+                for(int y = 0; y < currentRow; y++){
+                    neighbors = 0;
+                    //Left
+                    if( x - 1 >= 0 ){
+                        if(temp[x-1][y].isWallCA()) neighbors++;
+                    }
+                    //Right
+                    if( x + 1 < currentCol ){
+                        if(temp[x+1][y].isWallCA()) neighbors++;
+                    }
+                    //UP
+                    if( y - 1 >= 0){
+                        if(temp[x][y-1].isWallCA()) neighbors++;
+                    }
+                    //DOWN
+                    if( y + 1 < currentRow){
+                        if(temp[x][y+1].isWallCA()) neighbors++;
+                    }
+                    //LEFT UP
+                    if( x - 1 >= 0 &&  y - 1 >= 0){
+                        if(temp[x-1][y-1].isWallCA()) neighbors++;
+                    }
+                    //LEFT DOWN
+                    if( x - 1 >= 0 &&  y + 1 < currentRow){
+                        if(temp[x-1][y+1].isWallCA()) neighbors++;
+                    }
+                    //RIGHT UP
+                    if( x + 1 < currentCol &&  y - 1 >= 0){
+                        if(temp[x+1][y-1].isWallCA()) neighbors++;
+                    }
+                    //RIGHT DOWN
+                    if( x + 1 < currentCol &&  y + 1 < currentRow){
+                        if(temp[x+1][y+1].isWallCA()) neighbors++;
+                    }
+                    if(neighbors >= 5){
+                        map[x][y].setWallCA(true);
+                    }
+                    else{
+                        map[x][y].setWall(false);
+                    }
+                }
+            }
+
+        }
+    }
+
 }

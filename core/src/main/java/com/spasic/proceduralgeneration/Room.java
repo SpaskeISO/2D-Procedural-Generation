@@ -37,7 +37,7 @@ public class Room {
         }
     }
 
-    public boolean checkCollision(Node Nodes[][]){
+    public boolean checkCollision(Node[][] Nodes){
         if(this.x + this.width > ProceduralGeneration2D.col - 1 || this.y + this.length > ProceduralGeneration2D.row - 1 || this.x - 1 < 0 || this.y - 1 < 0){
             //System.out.println("Out of bounds");
             return false;

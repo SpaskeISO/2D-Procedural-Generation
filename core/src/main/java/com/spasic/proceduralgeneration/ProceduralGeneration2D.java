@@ -69,6 +69,14 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     public static float maxEdgeStartNumber = 10.0f;
     public static float edgeStartNumber = 4.0f;
 
+    //CA
+    public static float maxCAIterations = 2000;
+    public static float minCAIterations = 100;
+    public static float CAIterations = 1000;
+    public static float maxCAPercentage = 80;
+    public static float minCAPercentage = 20;
+    public static float CAPercentage = 50;
+
 
     //Node
     private Node[][] map;
@@ -78,6 +86,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     //UI
     private Group generalSettingsGroup;
     private Group DLAGroup;
+    private Group CAGroup;
 
     private ShapeRenderer shapeRenderer;
 
@@ -140,22 +149,22 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     public void drawNodes(){
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.SLATE);
-        shapeRenderer.rect(0, 0, 81 * map[0][0].getBoundigbox().getWidth(),
-            41 * map[0][0].getBoundigbox().getHeight());
+        shapeRenderer.rect(0, 0, 81 * map[0][0].getBoundingBox().getWidth(),
+            41 * map[0][0].getBoundingBox().getHeight());
         shapeRenderer.end();
 
         for(int x = 0; x < map.length; x++){
             for(int y = 0; y < map[x].length; y++){
                 shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
                 shapeRenderer.setColor(map[x][y].getColor());
-                shapeRenderer.rect(map[x][y].getBoundigbox().getX(), map[x][y].getBoundigbox().getY(),
-                    map[x][y].getBoundigbox().getWidth(), map[x][y].getBoundigbox().getHeight());
+                shapeRenderer.rect(map[x][y].getBoundingBox().getX(), map[x][y].getBoundingBox().getY(),
+                    map[x][y].getBoundingBox().getWidth(), map[x][y].getBoundingBox().getHeight());
                 shapeRenderer.end();
 
                 shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
                 shapeRenderer.setColor(Color.GRAY);
-                shapeRenderer.rect(map[x][y].getBoundigbox().getX(), map[x][y].getBoundigbox().getY(),
-                    map[x][y].getBoundigbox().getWidth(), map[x][y].getBoundigbox().getHeight());
+                shapeRenderer.rect(map[x][y].getBoundingBox().getX(), map[x][y].getBoundingBox().getY(),
+                    map[x][y].getBoundingBox().getWidth(), map[x][y].getBoundingBox().getHeight());
                 shapeRenderer.end();
 
             }
@@ -172,6 +181,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     private void createUI(){
         createGeneralSettingsUI();
         createDLAUI();
+        createCAUI();
 
 
 
@@ -282,6 +292,9 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
                     }
 
                 }
+                else if(generationSelectBox.getSelected() == DungeonGenerator.dungeonType.CA){
+                    map = dungeonGenerator.generateDungeonCA(col, row, (int) CAIterations, (int) CAPercentage);
+                }
 
             }
         });
@@ -368,6 +381,49 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         stage.addActor(DLAGroup);
     }
 
+    public void createCAUI(){
+        CAGroup = new Group();
+
+        //CA Settings Label
+        final Label CASettings = new Label("CA Settings: ", skin);
+
+        //CA IterationSlider
+        final Label IterationLabel = new Label(String.format("Iterations: %.0f", CAIterations), skin);
+        final Slider IterationSlider = new Slider(minCAIterations, maxCAIterations, 50.0f, false, skin);
+        IterationSlider.setValue(CAIterations);
+        IterationSlider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                CAIterations = (int) IterationSlider.getValue();
+                IterationLabel.setText(String.format("Iterations: %.0f", CAIterations));
+            }
+        });
+
+        //CA percentage Label
+        final Label PercentageLabel = new Label(String.format("Percentage:  %.0f", CAPercentage), skin);
+        //CA percentage Slider
+        final Slider PercentageSlider = new Slider(minCAPercentage, maxCAPercentage, 1.0f, false, skin);
+        PercentageSlider.setValue(CAPercentage);
+        PercentageSlider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                CAPercentage = (int) PercentageSlider.getValue();
+                PercentageLabel.setText(String.format("Percentage:  %.0f", CAPercentage));
+            }
+        });
+
+
+
+        CAGroup.addActor(CASettings);
+        CAGroup.addActor(IterationLabel);
+        CAGroup.addActor(IterationSlider);
+        CAGroup.addActor(PercentageLabel);
+        CAGroup.addActor(PercentageSlider);
+
+
+        stage.addActor(CAGroup);
+    }
+
     private void resizeUI(){
 
         Button generateButton = (Button) generalSettingsGroup.getChild(0);
@@ -381,6 +437,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         Label generationSelectLabel = (Label) generalSettingsGroup.getChild(8);
         Actor generationSelectBox = generalSettingsGroup.getChild(9);
 
+        //DLA
         Label DLASettingsLabel = (Label) DLAGroup.getChild(0);
         Label numberOfWalkersLabel = (Label) DLAGroup.getChild(1);
         Slider numberOfWalkersSlider = (Slider) DLAGroup.getChild(2);
@@ -389,6 +446,14 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         CheckBox edgeCheckBox = (CheckBox) DLAGroup.getChild(5);
         Label edgePointNumberLabel = (Label) DLAGroup.getChild(6);
         Slider edgePointsNumberSlider = (Slider) DLAGroup.getChild(7);
+
+        //CA
+        Label CASettingsLabel = (Label) CAGroup.getChild(0);
+        Label CAIterationLabel = (Label) CAGroup.getChild(1);
+        Slider CAIterationSlider = (Slider) CAGroup.getChild(2);
+        Label CAPercentageLabel =  (Label) CAGroup.getChild(3);
+        Slider CAPercentageSlider = (Slider) CAGroup.getChild(4);
+
 
 
         //General Settings
@@ -440,6 +505,17 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         edgePointsNumberSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.67f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
 
+        //CA Settings
+        CASettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.53f, Gdx.graphics.getHeight() * 0.79f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+        CAIterationLabel.setBounds(Gdx.graphics.getWidth() * 0.64f, Gdx.graphics.getHeight() * 0.76f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+        CAIterationSlider.setBounds(Gdx.graphics.getWidth() * 0.53f, Gdx.graphics.getHeight() * 0.76f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+        CAPercentageLabel.setBounds(Gdx.graphics.getWidth() * 0.64f, Gdx.graphics.getHeight() * 0.73f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+        CAPercentageSlider.setBounds(Gdx.graphics.getWidth() * 0.53f, Gdx.graphics.getHeight() * 0.73f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
     }
 
     private void DLAScrollerDynamicNumbers(){
@@ -458,9 +534,9 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     private void resizeMap(){
         for(int x = 0; x < map.length; x++){
             for(int y = 0; y < map[x].length; y++){
-                map[x][y].getBoundigbox().setPosition(x * Gdx.graphics.getWidth() * 0.008f,
+                map[x][y].getBoundingBox().setPosition(x * Gdx.graphics.getWidth() * 0.008f,
                     y * Gdx.graphics.getHeight() * 0.015f);
-                map[x][y].getBoundigbox().setSize(Gdx.graphics.getWidth() * 0.008f, Gdx.graphics.getHeight() * 0.015f);
+                map[x][y].getBoundingBox().setSize(Gdx.graphics.getWidth() * 0.008f, Gdx.graphics.getHeight() * 0.015f);
             }
         }
         System.out.println("map resized");
@@ -473,7 +549,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         viewport.update(width, height, true);
         batch.setProjectionMatrix(camera.combined);
         shapeRenderer.setProjectionMatrix(camera.combined);
-        System.out.println(map[0][0].getBoundigbox());
+        System.out.println(map[0][0].getBoundingBox());
     }
 
 
