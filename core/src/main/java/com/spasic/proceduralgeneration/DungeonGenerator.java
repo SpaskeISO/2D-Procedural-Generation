@@ -14,8 +14,8 @@ public class DungeonGenerator {
 
     private dungeonType type;
     //Map
-    private int maxCol = 80;
-    private int maxRow = 40;
+    private int maxCol = 160;
+    private int maxRow = 80;
     private int currentCol;
     private int currentRow;
     //Rooms
@@ -119,9 +119,9 @@ public class DungeonGenerator {
         }
         for(int x = 0; x < currentCol; x++){
             for(int y = 0; y < currentRow; y++){
-                map[x][y].getBoundingBox().setPosition(x * Gdx.graphics.getWidth() * 0.008f,
-                    y * Gdx.graphics.getHeight() * 0.015f);
-                map[x][y].getBoundingBox().setSize(Gdx.graphics.getWidth() * 0.008f, Gdx.graphics.getHeight() * 0.015f);
+                map[x][y].getBoundingBox().setPosition(x * Gdx.graphics.getWidth() * 0.004f,
+                    y * Gdx.graphics.getHeight() * 0.0075f);
+                map[x][y].getBoundingBox().setSize(Gdx.graphics.getWidth() * 0.004f, Gdx.graphics.getHeight() * 0.075f);
             }
         }
     }
@@ -476,69 +476,55 @@ public class DungeonGenerator {
 
 
     public void randomiseMapCA(int percentage){
-        for(int i = 0; i < maxCol; i++){
-            for(int j = 0; j < maxRow; j++){
-                if(percentage <= PRNG.distinctRandom.nextInt(1, 100)){
-                        map[i][j].setWallCA(true);
+        for(int i = 0; i < currentCol; i++){
+            for(int j = 0; j < currentRow; j++){
+                if(percentage >= PRNG.distinctRandom.nextInt(1, 100)){
+                    map[i][j].setWallCA(true);
                 }
+                else{
+                    map[i][j].setEmptyCA(true);
+                }
+
             }
         }
     }
 
-    public void iterateCA(int iterations){
-        int neighbors = 0;
-        Node[][] temp = new Node[currentCol][currentRow];
-        for(int i = 0; i < currentCol; i++){
-            for(int j = 0; j < currentRow; j++){
-                temp[i][j] = map[i][j];
-            }
-        }
-        for(int i = 0; i < iterations; i++){
-            for(int x = 0; x < currentCol; x++){
-                for(int y = 0; y < currentRow; y++){
-                    neighbors = 0;
-                    //Left
-                    if( x - 1 >= 0 ){
-                        if(temp[x-1][y].isWallCA()) neighbors++;
-                    }
-                    //Right
-                    if( x + 1 < currentCol ){
-                        if(temp[x+1][y].isWallCA()) neighbors++;
-                    }
-                    //UP
-                    if( y - 1 >= 0){
-                        if(temp[x][y-1].isWallCA()) neighbors++;
-                    }
-                    //DOWN
-                    if( y + 1 < currentRow){
-                        if(temp[x][y+1].isWallCA()) neighbors++;
-                    }
-                    //LEFT UP
-                    if( x - 1 >= 0 &&  y - 1 >= 0){
-                        if(temp[x-1][y-1].isWallCA()) neighbors++;
-                    }
-                    //LEFT DOWN
-                    if( x - 1 >= 0 &&  y + 1 < currentRow){
-                        if(temp[x-1][y+1].isWallCA()) neighbors++;
-                    }
-                    //RIGHT UP
-                    if( x + 1 < currentCol &&  y - 1 >= 0){
-                        if(temp[x+1][y-1].isWallCA()) neighbors++;
-                    }
-                    //RIGHT DOWN
-                    if( x + 1 < currentCol &&  y + 1 < currentRow){
-                        if(temp[x+1][y+1].isWallCA()) neighbors++;
-                    }
-                    if(neighbors >= 5){
-                        map[x][y].setWallCA(true);
-                    }
-                    else{
-                        map[x][y].setWall(false);
+    public int countNeighbors(Node[][] mapCopy, int x, int y){
+        int n = 0;
+        for(int ty = -1; ty <= 1; ty++ ){
+            for(int tx = -1; tx <= 1; tx++){
+                if(!(ty == 0 && tx == 0)){
+                    if( x + tx >= 0 && x + tx < currentCol && y + ty >= 0 && y + ty < currentRow){
+                        if(mapCopy[x + tx][y+ ty].isWallCA()){
+                            n++;
+                        }
                     }
                 }
             }
-
         }
+        return n;
+    }
+
+    public void iterateCA(int iterations){
+        for(int k = 0; k < iterations; k++){
+            Node[][] mapCopy = new Node[currentCol][currentRow];
+            for(int i = 0; i < map.length; i++){
+                for(int j = 0; j < map[i].length; j++){
+                    mapCopy[i][j] = map[i][j].clone();
+                }
+            }
+            for(int x = 0; x < currentCol; x++){
+                for(int y = 0; y < currentRow; y++){
+                    int neighbors = countNeighbors(mapCopy, x, y);
+                    if(neighbors == 0){
+                        map[x][y].setWallCA(false);
+                    }
+                    else map[x][y].setWallCA(neighbors < 5);
+                }
+            }
+        }
+
+
     }
 
 }

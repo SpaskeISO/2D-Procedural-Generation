@@ -10,7 +10,7 @@ import lombok.ToString;
 @Setter
 @ToString(onlyExplicitlyIncluded = true)
 
-public class Node{
+public class Node implements Cloneable{
 
     //@ToString.Include
     private Node nodeParent;
@@ -62,38 +62,32 @@ public class Node{
 
     }
 
-    /*public Node(Node copy){
-        this.boundingBox = copy.boundingBox;
-        this.col = copy.col;
-        this.row = copy.row;
-        this.color = copy.color;
-        this.foregroundColor = copy.foregroundColor;
-        this.text = copy.text;
 
-        this.gCost = copy.gCost;
-        this.hCost = copy.hCost;
-        this.fCost = copy.fCost;
-        this.start = copy.start;
-        this.goal = copy.goal;
-        this.room = copy.room;
-        this.entrance = copy.entrance;
-        this.wall = copy.wall;
-        this.solid = copy. solid;
-        this.path = copy.path;
-        this.open = copy.open;
-        this.checked = copy.checked;
-        this.connected = copy. connected;
+    @Override
+    protected Node clone(){
+        try{
+            Node cloned = (Node) super.clone();
 
-        //DLA parameters
+            if(this.boundingBox != null){
+                cloned.boundingBox = new Rectangle(this.boundingBox);
+            }
 
-        this.walker = copy.walker;
-        this.caveDLA = copy.caveDLA;
+            if(this.color != null){
+                cloned.color = new Color(this.color);
+            }
 
-        //CA parameters
-        this.wallCA = copy.wallCA;
-        this.emptyCA = copy.emptyCA;
-    }*/
+            if(this.foregroundColor != null){
+                cloned.foregroundColor = new Color(this.foregroundColor);
+            }
 
+            cloned.nodeParent = null;
+
+            return cloned;
+        } catch (CloneNotSupportedException e){
+            throw new AssertionError();
+        }
+
+    }
 
     public void setAsStart(){
         setColor(Color.BLUE);
@@ -175,7 +169,6 @@ public class Node{
         }
         foregroundColor = Color.BLACK;
         setPath(true);
-        //System.out.println(this);
     }
 
     public void setCaveDLA(boolean caveDLA){
@@ -201,19 +194,20 @@ public class Node{
         }
     }
 
-    public void setWallCA(boolean wallCA){
-        if(wallCA){
-            color = Color.BLACK;
+    public void setWallCA(boolean bool){
+        if(bool){
+            color = Color.GREEN;
             this.wallCA = true;
         }
         else{
             this.wallCA = false;
+            setEmptyCA(true);
         }
     }
 
     public void setEmptyCA(boolean emptyCA){
         if(emptyCA){
-            color = Color.WHITE;
+            color = Color.BROWN;
             this.emptyCA = true;
         }
         else{

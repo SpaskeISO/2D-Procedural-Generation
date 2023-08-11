@@ -48,8 +48,8 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     private BitmapFont font;
 
     //Map
-    public static int maxCol = 80;
-    public static int maxRow = 40;
+    public static int maxCol = 160;
+    public static int maxRow = 80;
     public static int minCol = 20;
     public static int minRow = 10;
     public static int maxNumberOfRooms = 20;
@@ -70,9 +70,9 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     public static float edgeStartNumber = 4.0f;
 
     //CA
-    public static float maxCAIterations = 2000;
-    public static float minCAIterations = 100;
-    public static float CAIterations = 1000;
+    public static float maxCAIterations = 100;
+    public static float minCAIterations = 1;
+    public static float CAIterations = 5;
     public static float maxCAPercentage = 80;
     public static float minCAPercentage = 20;
     public static float CAPercentage = 50;
@@ -114,12 +114,24 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         Gdx.input.setInputProcessor(stage);
         dungeonGenerator = new DungeonGenerator(DungeonGenerator.dungeonType.SRP, col, row);
         map = dungeonGenerator.generateBlankMap(col, row);
-
-
     }
 
     @Override
     public void render() {
+        //Gdx.gl.glClearColor(0.15f, 0.15f, 0.2f, 1f);
+        Gdx.gl.glClearColor(Color.SKY.r, Color.SKY.g, Color.SKY.b, 1f);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        keyInput();
+        drawNodes();
+
+
+
+        stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 60f));
+        stage.draw();
+
+    }
+
+    public void mapUpdated(){
         //Gdx.gl.glClearColor(0.15f, 0.15f, 0.2f, 1f);
         Gdx.gl.glClearColor(Color.SKY.r, Color.SKY.g, Color.SKY.b, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -129,9 +141,11 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         drawNodes();
 
 
+
+
         stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 60f));
         stage.draw();
-
+        Gdx.graphics.requestRendering();
     }
 
     @Override
@@ -147,29 +161,31 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
 
 
     public void drawNodes(){
+        // Draw filled rectangles
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.SLATE);
         shapeRenderer.rect(0, 0, 81 * map[0][0].getBoundingBox().getWidth(),
             41 * map[0][0].getBoundingBox().getHeight());
-        shapeRenderer.end();
 
-        for(int x = 0; x < map.length; x++){
-            for(int y = 0; y < map[x].length; y++){
-                shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        for (int x = 0; x < map.length; x++) {
+            for (int y = 0; y < map[x].length; y++) {
                 shapeRenderer.setColor(map[x][y].getColor());
                 shapeRenderer.rect(map[x][y].getBoundingBox().getX(), map[x][y].getBoundingBox().getY(),
                     map[x][y].getBoundingBox().getWidth(), map[x][y].getBoundingBox().getHeight());
-                shapeRenderer.end();
-
-                shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-                shapeRenderer.setColor(Color.GRAY);
-                shapeRenderer.rect(map[x][y].getBoundingBox().getX(), map[x][y].getBoundingBox().getY(),
-                    map[x][y].getBoundingBox().getWidth(), map[x][y].getBoundingBox().getHeight());
-                shapeRenderer.end();
-
             }
         }
+        shapeRenderer.end();
 
+        // Draw lines
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(Color.GRAY);
+        for (int x = 0; x < map.length; x++) {
+            for (int y = 0; y < map[x].length; y++) {
+                shapeRenderer.rect(map[x][y].getBoundingBox().getX(), map[x][y].getBoundingBox().getY(),
+                    map[x][y].getBoundingBox().getWidth(), map[x][y].getBoundingBox().getHeight());
+            }
+        }
+        shapeRenderer.end();
 
 
     }
@@ -296,6 +312,9 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
                     map = dungeonGenerator.generateDungeonCA(col, row, (int) CAIterations, (int) CAPercentage);
                 }
 
+                resizeMap();
+                mapUpdated();
+
             }
         });
 
@@ -389,7 +408,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
 
         //CA IterationSlider
         final Label IterationLabel = new Label(String.format("Iterations: %.0f", CAIterations), skin);
-        final Slider IterationSlider = new Slider(minCAIterations, maxCAIterations, 50.0f, false, skin);
+        final Slider IterationSlider = new Slider(minCAIterations, maxCAIterations, 1.0f, false, skin);
         IterationSlider.setValue(CAIterations);
         IterationSlider.addListener(new ChangeListener() {
             @Override
@@ -534,12 +553,11 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     private void resizeMap(){
         for(int x = 0; x < map.length; x++){
             for(int y = 0; y < map[x].length; y++){
-                map[x][y].getBoundingBox().setPosition(x * Gdx.graphics.getWidth() * 0.008f,
-                    y * Gdx.graphics.getHeight() * 0.015f);
-                map[x][y].getBoundingBox().setSize(Gdx.graphics.getWidth() * 0.008f, Gdx.graphics.getHeight() * 0.015f);
+                map[x][y].getBoundingBox().setPosition(x * Gdx.graphics.getWidth() * 0.004f,
+                    y * Gdx.graphics.getHeight() * 0.0075f);
+                map[x][y].getBoundingBox().setSize(Gdx.graphics.getWidth() * 0.004f, Gdx.graphics.getHeight() * 0.0075f);
             }
         }
-        System.out.println("map resized");
     }
 
     @Override
