@@ -45,6 +45,9 @@ public class Node implements Cloneable{
     private boolean wallCA;
     private boolean emptyCA;
 
+    //Perlin parameters
+    public enum PerlinHeight { DEEP_WATER, WATER, BEACH, GRASSLANDS, FOREST, HILL, MOUNTAIN, SNOWY_MOUNTAIN }
+    private PerlinHeight PerlinType;
 
     @ToString.Include
     private Color color;
@@ -212,6 +215,20 @@ public class Node implements Cloneable{
         }
         else{
             this.emptyCA = false;
+        }
+    }
+
+    //Perlin Methods
+    public void setPerlinType(PerlinHeight ph){
+        switch (ph){
+            case DEEP_WATER -> setColor(new Color(0.016f, 0.106f, 0.741f, 1.0f));
+            case WATER -> setColor(new Color(0.318f, 0.486f, 0.839f, 1.0f));
+            case BEACH -> setColor(new Color(1.0f, 0.973f, 0.58f, 1.0f));
+            case GRASSLANDS -> setColor(new Color(0.302f, 0.949f, 0.439f, 1.0f));
+            case FOREST -> setColor(new Color(0.055f, 0.51f, 0.153f, 1.0f));
+            case HILL -> setColor(new Color(0.529f, 0.424f, 0.161f, 1.0f));
+            case MOUNTAIN -> setColor(new Color(0.431f, 0.431f, 0.431f, 1.0f));
+            case SNOWY_MOUNTAIN -> setColor(new Color(0.922f, 0.922f, 0.922f, 1.0f));
         }
     }
 

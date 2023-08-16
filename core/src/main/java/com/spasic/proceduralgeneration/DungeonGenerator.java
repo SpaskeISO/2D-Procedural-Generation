@@ -1,6 +1,7 @@
 package com.spasic.proceduralgeneration;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.math.Vector2;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,7 +11,7 @@ import java.util.ArrayList;
 @Setter
 public class DungeonGenerator {
 
-    public enum dungeonType { SRP, BSP, CA, DLA }
+    public enum dungeonType { SRP, PERLIN, CA, DLA }
 
     private dungeonType type;
     //Map
@@ -27,6 +28,11 @@ public class DungeonGenerator {
     private ArrayList<Node> openList = new ArrayList<>();
     private ArrayList<Node> checkedList = new ArrayList<>();
     private ArrayList<Node> entrancesList = new ArrayList<>();
+
+    //Perlin
+    public static int[] PerlinPermutations = new int[512];
+    public static int Octaves = 4;
+    public static float Persistence = 0.5f;
 
     //others
     private boolean goalReached = false;
@@ -96,6 +102,13 @@ public class DungeonGenerator {
         createNodes();
         randomiseMapCA(percentage);
         iterateCA(iterations);
+
+        return map;
+    }
+
+    public Node[][] generateDungeonPerlin(int maxCol, int maxRow, int Octaves, float Persistence){
+        initializePermutations();
+        PerlinGeneration();
 
         return map;
     }
@@ -526,5 +539,130 @@ public class DungeonGenerator {
 
 
     }
+
+    //Perlin Noise Methods
+    private void initializePermutations(){
+        for(int i = 0; i < 256; i++){
+            PerlinPermutations[i] = i;
+        }
+
+        //Shuffling of the array
+        for(int i = 0; i < 256; i++){
+            int j = PRNG.distinctRandom.nextInt(256);
+            int temp = PerlinPermutations[i];
+            PerlinPermutations[i] = PerlinPermutations[j];
+            PerlinPermutations[j] = temp;
+        }
+
+        //Duplication of the array
+        for(int i = 0; i < 256; i++){
+            PerlinPermutations[i + 256] = PerlinPermutations[i];
+        }
+
+    }
+
+    private float fade(float t){
+        return t * t * t * (t * (t * 6 - 15) + 10);
+    }
+
+    private float lerp(float t, float a, float b){
+        return a + t * (b - a);
+    }
+
+    private float grad(int hash, float x, float y, float z){
+        int h = hash & 15; // Convert low 4 bits of hash code into 12 gradient directions
+        float u = h < 8 ? x : y;
+        float v = h < 4 ? y : h == 12 || h == 14 ? x : z;
+        return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v  : -v);
+    }
+
+    public float noise(float x, float y, float z){
+        int X = (int) Math.floor(x) & 255;
+        int Y = (int) Math.floor(y) & 255;
+        int Z = (int) Math.floor(z) & 255;
+
+        x -= (float) Math.floor(x);
+        y -= (float) Math.floor(y);
+        z -= (float) Math.floor(z);
+
+        float u = fade(x);
+        float v = fade(y);
+        float w = fade(z);
+
+        int A = PerlinPermutations[X] + Y, AA = PerlinPermutations[A] + Z, AB = PerlinPermutations[A + 1] + Z;
+        int B = PerlinPermutations[X + 1] + Y, BA = PerlinPermutations[B] + Z, BB = PerlinPermutations[B + 1] + Z;
+
+        return lerp(w, lerp(v, lerp(u, grad(PerlinPermutations[AA], x, y, z),
+                    grad(PerlinPermutations[BA], x - 1, y, z)),
+                lerp(u, grad(PerlinPermutations[AB], x, y - 1, z),
+                    grad(PerlinPermutations[BB], x - 1, y - 1, z))),
+            lerp(v, lerp(u, grad(PerlinPermutations[AA + 1], x, y, z - 1),
+                    grad(PerlinPermutations[BA + 1], x - 1, y, z - 1)),
+                lerp(u, grad(PerlinPermutations[AB + 1], x, y - 1, z - 1),
+                    grad(PerlinPermutations[BB + 1], x - 1, y - 1, z - 1))));
+
+    }
+
+    public float generatePerlinNoise(float x, float y){
+        float total = 0.0f;
+        float frequency = 1.0f;
+        float amplitude = 1.0f;
+
+        for(int i = 0; i < Octaves; i++){
+            total += noise(x * frequency, y * frequency, 0) * amplitude;
+            frequency *= 2;
+            amplitude *= Persistence;
+        }
+
+        return total;
+    }
+
+    public void PerlinGeneration(){
+        float[][] noiseMap = new float[currentCol][currentRow];
+
+
+        for(int i = 0; i < currentCol; i++){
+            for(int j = 0; j < currentRow; j++){
+                float x = (float) i / currentCol;
+                float y = (float) j / currentRow;
+                noiseMap[i][j] = generatePerlinNoise(x, y);
+            }
+        }
+
+        float minValue = Float.MAX_VALUE;
+        float maxValue = Float.MIN_VALUE;
+
+        for(int i = 0; i < currentCol; i++){
+            for(int j = 0; j < currentRow; j++){
+                float value = noiseMap[i][j];
+                if(value < minValue){
+                    minValue = value;
+                }
+                if(value > maxValue){
+                    maxValue = value;
+                }
+            }
+        }
+
+        float normalizedRange = 7.0f;
+
+        for(int i = 0; i < currentCol; i++){
+            for(int j = 0; j < currentRow; j++){
+                float normalizedValue = ((noiseMap[i][j]- minValue) / (maxValue - minValue)) * normalizedRange;
+                noiseMap[i][j] = normalizedValue;
+            }
+        }
+
+        for(int i = 0; i < currentCol; i++){
+            for(int j = 0; j < currentRow; j++){
+                map[i][j].setPerlinType(Node.PerlinHeight.values()[(int) noiseMap[i][j]]);
+            }
+        }
+    }
+
+
+
+
+
 
 }

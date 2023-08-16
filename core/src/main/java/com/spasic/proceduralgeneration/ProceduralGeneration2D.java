@@ -77,6 +77,10 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     public static float minCAPercentage = 20;
     public static float CAPercentage = 50;
 
+    //Perlin
+    public static int Octaves = 4; // Adjust this value to control the smoothness of the noise
+    public static float Persistence = 0.5f; // Number of octaves used for generating noise
+
 
     //Node
     private Node[][] map;
@@ -87,7 +91,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     private Group generalSettingsGroup;
     private Group DLAGroup;
     private Group CAGroup;
-
+    private Group PerlinGroup;
     private ShapeRenderer shapeRenderer;
 
     @Override
@@ -198,6 +202,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         createGeneralSettingsUI();
         createDLAUI();
         createCAUI();
+        createPerlinUI();
 
 
 
@@ -441,6 +446,17 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
 
 
         stage.addActor(CAGroup);
+    }
+
+    public void createPerlinUI(){
+        PerlinGroup = new Group();
+
+        // Perlin Settings Label
+        final Label PerlinSettingsLabel = new Label("Perlin Settings: ", skin);
+
+
+
+        stage.addActor(PerlinGroup);
     }
 
     private void resizeUI(){
