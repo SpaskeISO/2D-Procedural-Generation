@@ -32,6 +32,8 @@ public class DungeonGenerator {
     //Perlin
     public static int[] PerlinPermutations = new int[512];
     public static int Octaves = 4;
+    public static float maxPersistence = 1.0f;
+    public static float minPersistence = Float.MIN_VALUE;
     public static float Persistence = 0.5f;
 
     //others

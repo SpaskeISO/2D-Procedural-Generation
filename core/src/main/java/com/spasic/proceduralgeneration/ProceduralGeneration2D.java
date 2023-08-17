@@ -2,6 +2,8 @@ package com.spasic.proceduralgeneration;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -10,10 +12,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.Group;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
@@ -79,7 +78,10 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
 
     //Perlin
     public static int Octaves = 4; // Adjust this value to control the smoothness of the noise
+    public static float maxPersistence = 1.0f;
+    public static float minPersistence = 0.01f;
     public static float Persistence = 0.5f; // Number of octaves used for generating noise
+
 
 
     //Node
@@ -316,6 +318,9 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
                 else if(generationSelectBox.getSelected() == DungeonGenerator.dungeonType.CA){
                     map = dungeonGenerator.generateDungeonCA(col, row, (int) CAIterations, (int) CAPercentage);
                 }
+                else if (generationSelectBox.getSelected() == DungeonGenerator.dungeonType.PERLIN) {
+                    map = dungeonGenerator.generateDungeonPerlin(col, row, Octaves, Persistence);
+                }
 
                 resizeMap();
                 mapUpdated();
@@ -454,6 +459,55 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         // Perlin Settings Label
         final Label PerlinSettingsLabel = new Label("Perlin Settings: ", skin);
 
+        final Label OcatvesLabel = new Label("Octaves: ", skin);
+        final TextField OctavesValue = new TextField(Integer.toString(Octaves), skin);
+        OctavesValue.addListener(new InputListener(){
+            @Override
+            public boolean keyUp(InputEvent event, int keycode) {
+                if (keycode == Input.Keys.ENTER) {
+                    String temp = OctavesValue.getText();
+                    if (!temp.isEmpty()) {
+                        int value = Integer.parseInt(temp);
+                        if (value < 2) value = 2;
+                        Octaves = value;
+                        OctavesValue.setText(Integer.toString(Octaves));
+                        Gdx.app.log("Entered Text", Integer.toString(Octaves));
+                        return true;
+                    }
+
+                }
+                return false;
+            }
+        });
+
+
+        final Label PersistenceLabel = new Label("Persistence: ", skin);
+        final TextField PersistenceValue = new TextField(String.format("%.2f", Persistence), skin);
+        PersistenceValue.addListener(new InputListener(){
+            @Override
+            public boolean keyUp(InputEvent event, int keycode) {
+                if (keycode == Input.Keys.ENTER) {
+                    String temp = PersistenceValue.getText();
+                    if (!temp.isEmpty()) {
+                        float value = Float.parseFloat(temp);
+                        if(value > maxPersistence) value = maxPersistence;
+                        else if (value < minPersistence) value = minPersistence;
+                        Persistence = value;
+                        PersistenceValue.setText(String.format("%.2f", Persistence));
+                        Gdx.app.log("Entered Text", String.format("%.2f", Persistence));
+                        return true;
+                    }
+
+                }
+                return false;
+            }
+        });
+
+        PerlinGroup.addActor(PerlinSettingsLabel);
+        PerlinGroup.addActor(OcatvesLabel);
+        PerlinGroup.addActor(OctavesValue);
+        PerlinGroup.addActor(PersistenceLabel);
+        PerlinGroup.addActor(PersistenceValue);
 
 
         stage.addActor(PerlinGroup);
@@ -488,6 +542,14 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         Slider CAIterationSlider = (Slider) CAGroup.getChild(2);
         Label CAPercentageLabel =  (Label) CAGroup.getChild(3);
         Slider CAPercentageSlider = (Slider) CAGroup.getChild(4);
+
+        //Perlin
+        Label PerlinSettingsLabel = (Label) PerlinGroup.getChild(0);
+        Label PerlinOctavesLabel = (Label) PerlinGroup.getChild(1);
+        TextField PerlinOctavesValue = (TextField) PerlinGroup.getChild(2);
+        Label PerlinPersistenceLabel = (Label) PerlinGroup.getChild(3);
+        TextField PerlinPersistenceValue = (TextField) PerlinGroup.getChild(4);
+
 
 
 
@@ -550,6 +612,18 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         CAPercentageLabel.setBounds(Gdx.graphics.getWidth() * 0.64f, Gdx.graphics.getHeight() * 0.73f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
         CAPercentageSlider.setBounds(Gdx.graphics.getWidth() * 0.53f, Gdx.graphics.getHeight() * 0.73f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+
+        //Perlin Settings
+        PerlinSettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.61f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+        PerlinOctavesLabel.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.58f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+        PerlinOctavesValue.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.55f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+        PerlinPersistenceLabel.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.52f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+        PerlinPersistenceValue.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.49f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
     }
 
