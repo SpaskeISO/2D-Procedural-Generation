@@ -1,22 +1,26 @@
 package com.spasic.proceduralgeneration;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.ui.List;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
 public class DungeonGenerator {
 
-    public enum dungeonType { SRP, PERLIN, CA, DLA }
+    public enum dungeonType { SRP, PERLIN, CA, DLA, VORONOI }
 
     private dungeonType type;
     //Map
-    private int maxCol = 160;
-    private int maxRow = 80;
+    private int maxCol = 1600;
+    private int maxRow = 1600;
     private int currentCol;
     private int currentRow;
     //Rooms
@@ -36,6 +40,15 @@ public class DungeonGenerator {
     public static float minPersistence = Float.MIN_VALUE;
     public static float Persistence = 0.5f;
 
+    // Voronoi
+    private ArrayList<Vector2> sites = new ArrayList<>();
+    private ArrayList<Color> colors = new ArrayList<>();
+    @Getter
+    @Setter
+    private static int NUM_SITES = 10;
+
+
+
     //others
     private boolean goalReached = false;
     private int firstReached = 0;
@@ -53,7 +66,7 @@ public class DungeonGenerator {
     public Node [][] generateDungeonDLA(int maxCol, int maxRow, int numberOfWalkers, float stickiness){
         this.currentCol = maxCol;
         this.currentRow = maxRow;
-        map = new Node[currentCol][currentRow];
+        map = new Node[this.maxCol][this.maxRow];
         createNodes();
         setStartNodesDLA();
         walk(numberOfWalkers, stickiness);
@@ -65,7 +78,7 @@ public class DungeonGenerator {
     public Node [][] generateDungeonDLA(int maxCol, int maxRow, int numberOfWalkers, float stickiness, int numberOfStartNodes){
         this.currentCol = maxCol;
         this.currentRow = maxRow;
-        map = new Node[currentCol][currentRow];
+        map = new Node[this.maxCol][this.maxRow];
         createNodes();
         setStartNodesDLA(numberOfStartNodes);
         walk(numberOfWalkers, stickiness);
@@ -79,7 +92,7 @@ public class DungeonGenerator {
         this.currentRow = maxRow;
         this.numberOfRooms = numberOfRooms;
         resetParametersSRP();
-        map = new Node[currentCol][currentRow];
+        map = new Node[this.maxCol][this.maxRow];
         createNodes();
         placeRoomsSRP();
         connectEntrances();
@@ -91,7 +104,7 @@ public class DungeonGenerator {
     public Node[][] generateBlankMap(int maxCol, int maxRow){
         this.currentCol = maxCol;
         this.currentRow = maxRow;
-        map = new Node[currentCol][currentRow];
+        map = new Node[this.maxCol][this.maxRow];
         createNodes();
 
         return map;
@@ -100,7 +113,7 @@ public class DungeonGenerator {
     public Node[][] generateDungeonCA(int maxCol, int maxRow, int iterations, int percentage){
         this.currentCol = maxCol;
         this.currentRow = maxRow;
-        map = new Node[currentCol][currentRow];
+        map = new Node[this.maxCol][this.maxRow];
         createNodes();
         randomiseMapCA(percentage);
         iterateCA(iterations);
@@ -109,8 +122,29 @@ public class DungeonGenerator {
     }
 
     public Node[][] generateDungeonPerlin(int maxCol, int maxRow, int Octaves, float Persistence){
+        this.currentCol = maxCol;
+        this.currentRow = maxRow;
+        map = new Node[this.maxCol][this.maxRow];
+        createNodes();
         initializePermutations();
         PerlinGeneration();
+
+        return map;
+    }
+
+    public Node[][] generateDungeonVoronoi(int maxCol, int maxRow, int NUM_SITES){
+        this.currentCol = maxCol;
+        this.currentRow = maxRow;
+        DungeonGenerator.NUM_SITES = NUM_SITES;
+        if(!sites.isEmpty()){
+            sites.clear();
+        }
+        if(!colors.isEmpty()){
+            colors.clear();
+        }
+        generateRandomSitesAndColors();
+        generateVoronoi();
+
 
         return map;
     }
@@ -127,13 +161,13 @@ public class DungeonGenerator {
     }
 
     public void createNodes(){
-        for(int x = 0; x < currentCol; x++){
-            for(int y = 0; y < currentRow; y++){
+        for(int x = 0; x < maxCol; x++){
+            for(int y = 0; y < maxRow; y++){
                 map[x][y] = new Node(x,y);
             }
         }
-        for(int x = 0; x < currentCol; x++){
-            for(int y = 0; y < currentRow; y++){
+        for(int x = 0; x < maxCol; x++){
+            for(int y = 0; y < maxRow; y++){
                 map[x][y].getBoundingBox().setPosition(x * Gdx.graphics.getWidth() * 0.004f,
                     y * Gdx.graphics.getHeight() * 0.0075f);
                 map[x][y].getBoundingBox().setSize(Gdx.graphics.getWidth() * 0.004f, Gdx.graphics.getHeight() * 0.075f);
@@ -259,8 +293,6 @@ public class DungeonGenerator {
 
                 } while (!((x + moveX) >= 0 && (x + moveX) < currentCol && (y + moveY) >= 0 && (y + moveY) < currentRow));
 
-                //System.out.println("moveX: " + moveX + "|| moveY: " + moveY);
-                //System.out.println("x: " + x + "|| y: " + y);
                 if(!map[x+moveX][y+moveY].isCaveDLA()){
                     map[x][y].setWalker(false);
                     x += moveX;
@@ -313,7 +345,7 @@ public class DungeonGenerator {
     }
 
     /**
-     * This method calculates costs of the Node ojbect that is passed as an argument. G cost is distance from START node
+     * This method calculates costs of the Node object that is passed as an argument. G cost is distance from START node
      * H cost is distance from GOAL node, F cost is the sum of G cost and H cost.
      * @param node reference to the Node that we are calculating the costs for.
      */
@@ -420,7 +452,7 @@ public class DungeonGenerator {
                 }
             }
 
-            if(openList.size() == 0){
+            if(openList.isEmpty()){
                 break;
             }
 
@@ -523,8 +555,8 @@ public class DungeonGenerator {
     public void iterateCA(int iterations){
         for(int k = 0; k < iterations; k++){
             Node[][] mapCopy = new Node[currentCol][currentRow];
-            for(int i = 0; i < map.length; i++){
-                for(int j = 0; j < map[i].length; j++){
+            for(int i = 0; i < currentCol; i++){
+                for(int j = 0; j < currentRow; j++){
                     mapCopy[i][j] = map[i][j].clone();
                 }
             }
@@ -661,6 +693,63 @@ public class DungeonGenerator {
             }
         }
     }
+
+    // Voronoi Methods
+    private void generateRandomSitesAndColors(){
+        Set<Vector2> uniqueSites = new HashSet<>(NUM_SITES);
+        Set<Color> uniqueColors = new HashSet<>(NUM_SITES);
+        Vector2 tempVector2 = new Vector2();
+        Color tempColor = new Color();
+
+        while (uniqueSites.size() < NUM_SITES){
+            tempVector2.set(PRNG.distinctRandom.nextInt(currentCol), PRNG.distinctRandom.nextInt(currentRow));
+            tempColor.set(PRNG.distinctRandom.nextFloat(1.0f),
+                PRNG.distinctRandom.nextFloat(1.0f),
+                PRNG.distinctRandom.nextFloat(1.0f), 1.0f);
+            if(!uniqueSites.contains(tempVector2)){
+                uniqueSites.add(new Vector2(tempVector2));
+                sites.add(new Vector2(tempVector2));
+            }
+            if(!uniqueColors.contains(tempColor)){
+                uniqueColors.add(new Color(tempColor));
+                colors.add(new Color(tempColor));
+            }
+
+        }
+
+    }
+
+    private void findClosestNode(Node currentNode){
+        int closestNodeIndex = Integer.MIN_VALUE;
+        int minDistance = Integer.MAX_VALUE;
+
+        for(int i = 0; i < sites.size(); i++){
+            int distance = calculateDistance(new Vector2(currentNode.getCol(), currentNode.getRow()), sites.get(i));
+            if(distance < minDistance){
+                minDistance = distance;
+                closestNodeIndex = i;
+            }
+
+            currentNode.setColor(colors.get(closestNodeIndex));
+        }
+
+    }
+
+    private int calculateDistance(Vector2 currentNode, Vector2 site){
+        int deltaX = (int) (site.x - currentNode.x);
+        int deltaY = (int) (site.y - currentNode.y);
+        return (int) Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    }
+
+    private void generateVoronoi(){
+        for(int i = 0; i < currentCol; i++){
+            for(int j = 0; j < currentRow; j++){
+                findClosestNode(map[i][j]);
+            }
+        }
+    }
+
+
 
 
 

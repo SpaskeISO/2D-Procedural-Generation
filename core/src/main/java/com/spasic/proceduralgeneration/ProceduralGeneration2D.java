@@ -47,15 +47,15 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     private BitmapFont font;
 
     //Map
-    public static int maxCol = 160;
-    public static int maxRow = 80;
+    public static int maxCol = 400;
+    public static int maxRow = 400;
     public static int minCol = 20;
     public static int minRow = 10;
     public static int maxNumberOfRooms = 20;
     public static int minNumberOfRooms = 2;
     public static int numberOfRooms = 10;
-    public static int col = maxCol;
-    public static int row = maxRow;
+    public static int col = 160;
+    public static int row = 80;
 
     //DLA
     public static int minNumberOfWalkers = minCol * minRow;
@@ -83,6 +83,9 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     public static float Persistence = 0.5f; // Number of octaves used for generating noise
 
 
+    // Voronoi
+    private static int NUM_SITES = DungeonGenerator.getNUM_SITES();
+
 
     //Node
     private Node[][] map;
@@ -94,6 +97,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     private Group DLAGroup;
     private Group CAGroup;
     private Group PerlinGroup;
+    private Group VoronoiGroup;
     private ShapeRenderer shapeRenderer;
 
     @Override
@@ -118,18 +122,17 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         shapeRenderer.setProjectionMatrix(camera.combined);
 
         Gdx.input.setInputProcessor(stage);
-        dungeonGenerator = new DungeonGenerator(DungeonGenerator.dungeonType.SRP, col, row);
-        map = dungeonGenerator.generateBlankMap(col, row);
+        dungeonGenerator = new DungeonGenerator(DungeonGenerator.dungeonType.SRP, maxCol, maxRow);
+        map = dungeonGenerator.generateBlankMap(maxCol, maxRow);
     }
 
     @Override
     public void render() {
-        //Gdx.gl.glClearColor(0.15f, 0.15f, 0.2f, 1f);
         Gdx.gl.glClearColor(Color.SKY.r, Color.SKY.g, Color.SKY.b, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         keyInput();
+        resizeMap();
         drawNodes();
-
 
 
         stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 60f));
@@ -167,32 +170,42 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
 
 
     public void drawNodes(){
-        // Draw filled rectangles
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(Color.SLATE);
-        shapeRenderer.rect(0, 0, 81 * map[0][0].getBoundingBox().getWidth(),
-            41 * map[0][0].getBoundingBox().getHeight());
-
-        for (int x = 0; x < map.length; x++) {
-            for (int y = 0; y < map[x].length; y++) {
-                shapeRenderer.setColor(map[x][y].getColor());
-                shapeRenderer.rect(map[x][y].getBoundingBox().getX(), map[x][y].getBoundingBox().getY(),
-                    map[x][y].getBoundingBox().getWidth(), map[x][y].getBoundingBox().getHeight());
+        try{
+            // Draw filled rectangles
+            if(shapeRenderer.isDrawing()){
+                shapeRenderer.end();
             }
-        }
-        shapeRenderer.end();
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(Color.SLATE);
+            shapeRenderer.rect(0, 0, Gdx.graphics.getWidth() * 0.605f,
+                Gdx.graphics.getHeight());
 
-        // Draw lines
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(Color.GRAY);
-        for (int x = 0; x < map.length; x++) {
-            for (int y = 0; y < map[x].length; y++) {
-                shapeRenderer.rect(map[x][y].getBoundingBox().getX(), map[x][y].getBoundingBox().getY(),
-                    map[x][y].getBoundingBox().getWidth(), map[x][y].getBoundingBox().getHeight());
+            for (int x = 0; x < col; x++) {
+                for (int y = 0; y < row; y++) {
+                    shapeRenderer.setColor(map[x][y].getColor());
+                    shapeRenderer.rect(map[x][y].getBoundingBox().getX(), map[x][y].getBoundingBox().getY(),
+                        map[x][y].getBoundingBox().getWidth(), map[x][y].getBoundingBox().getHeight());
+                }
             }
-        }
-        shapeRenderer.end();
+            shapeRenderer.end();
 
+            // Draw lines
+            SelectBox<DungeonGenerator.dungeonType> temp = (SelectBox) generalSettingsGroup.getChild(9);
+            if(temp.getSelected() != DungeonGenerator.dungeonType.PERLIN && col < 250 && row < 250 && temp.getSelected() != DungeonGenerator.dungeonType.VORONOI){
+                shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+                shapeRenderer.setColor(Color.GRAY);
+                for (int x = 0; x < col; x++) {
+                    for (int y = 0; y < row; y++) {
+                        shapeRenderer.rect(map[x][y].getBoundingBox().getX(), map[x][y].getBoundingBox().getY(),
+                            map[x][y].getBoundingBox().getWidth(), map[x][y].getBoundingBox().getHeight());
+                    }
+                }
+                shapeRenderer.end();
+            }
+
+        } catch (ArrayIndexOutOfBoundsException ignored){
+
+        }
 
     }
 
@@ -205,36 +218,29 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         createDLAUI();
         createCAUI();
         createPerlinUI();
-
-
+        createVoronoiUI();
 
         resizeUI();
-
     }
 
-    public void createGeneralSettingsUI(){
+    private void createGeneralSettingsUI(){
         generalSettingsGroup = new Group();
 
         // General settings label
         final Label generalSettingsLabel = new Label("General Settings:", skin);
-        /*generalSettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.95f,
-            Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);*/
 
         // Columns Label
         final Label colLabel = new Label( "Columns: " + col, skin);
-        /*colLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() * 0.92f,
-            Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);*/
         colLabel.setName("colLabel");
 
         // Columns Slider
         final Slider colSlider = new Slider( (float)minCol, (float)maxCol, 1.0f, false,skin);
-        /*colSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.92f,
-            Gdx.graphics.getWidth()* 0.1f, Gdx.graphics.getHeight() * 0.03f);*/
-        colSlider.setValue((float)maxCol);
+        colSlider.setValue((float) col);
         colSlider.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 col = (int)colSlider.getValue();
+                //System.out.println("Col: " + col);
                 colLabel.setText("Columns: " + col);
                 DLAScrollerDynamicNumbers();
             }
@@ -243,18 +249,17 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
 
         // Row Label
         final Label rowLabel = new Label("Rows: " + row, skin);
-        /*rowLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() *  0.89f,
-            Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);*/
         rowLabel.setName("rowLabel");
 
         // Row Slider
         final Slider rowSlider = new Slider( (float)minRow, (float)maxRow, 1.0f, false, skin);
-        rowSlider.setValue((float)maxRow);
+        rowSlider.setValue((float) row);
         rowSlider.addListener( new ChangeListener(){
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 row = (int)rowSlider.getValue();
                 rowLabel.setText("Rows: " + row);
+                //System.out.println("Rows: " + row);
                 DLAScrollerDynamicNumbers();
 
             }
@@ -289,8 +294,6 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 dungeonGenerator.setType(generationSelectBox.getSelected());
-                /*switch (generationSelectBox.getSelected()){
-                }*/
             }
         });
 
@@ -321,6 +324,9 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
                 else if (generationSelectBox.getSelected() == DungeonGenerator.dungeonType.PERLIN) {
                     map = dungeonGenerator.generateDungeonPerlin(col, row, Octaves, Persistence);
                 }
+                else if(generationSelectBox.getSelected() == DungeonGenerator.dungeonType.VORONOI){
+                    map = dungeonGenerator.generateDungeonVoronoi(col, row, NUM_SITES);
+                }
 
                 resizeMap();
                 mapUpdated();
@@ -343,7 +349,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         stage.addActor(generalSettingsGroup);
     }
 
-    public void createDLAUI(){
+    private void createDLAUI(){
         DLAGroup = new Group();
 
 
@@ -385,7 +391,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
             }
         });
 
-        final Label edgePointNumberLabel = new Label(String.format("Edge point numbers: %.0f", edgeStartNumber), skin);
+        final Label edgePointNumberLabel = new Label(String.format("Edge points: %.0f", edgeStartNumber), skin);
 
         final Slider edgePointsNumberSlider = new Slider(minEdgeStartNumber, maxEdgeStartNumber, 1.0f, false, skin);
         edgePointsNumberSlider.setValue(edgeStartNumber);
@@ -410,7 +416,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         stage.addActor(DLAGroup);
     }
 
-    public void createCAUI(){
+    private void createCAUI(){
         CAGroup = new Group();
 
         //CA Settings Label
@@ -453,7 +459,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         stage.addActor(CAGroup);
     }
 
-    public void createPerlinUI(){
+    private void createPerlinUI(){
         PerlinGroup = new Group();
 
         // Perlin Settings Label
@@ -471,7 +477,6 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
                         if (value < 2) value = 2;
                         Octaves = value;
                         OctavesValue.setText(Integer.toString(Octaves));
-                        Gdx.app.log("Entered Text", Integer.toString(Octaves));
                         return true;
                     }
 
@@ -494,7 +499,6 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
                         else if (value < minPersistence) value = minPersistence;
                         Persistence = value;
                         PersistenceValue.setText(String.format("%.2f", Persistence));
-                        Gdx.app.log("Entered Text", String.format("%.2f", Persistence));
                         return true;
                     }
 
@@ -511,6 +515,38 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
 
 
         stage.addActor(PerlinGroup);
+    }
+
+    private void createVoronoiUI(){
+        VoronoiGroup = new Group();
+
+        final Label VoronoiSettingsLabel = new Label("Voronoi Settings:", skin);
+
+        final Label NumberOfSitesLabel = new Label("Number of Sites:", skin);
+        final TextField NumberOfSitesValue = new TextField(Integer.toString(NUM_SITES), skin);
+        NumberOfSitesValue.addListener(new InputListener(){
+            @Override
+            public boolean keyUp(InputEvent event, int keycode) {
+                if(keycode == Input.Keys.ENTER){
+                    String temp = NumberOfSitesValue.getText();
+                    if (!temp.isEmpty()) {
+                        int value = Integer.parseInt(temp);
+                        if (value < 2) value = 2;
+                        NUM_SITES = value;
+                        NumberOfSitesValue.setText(Integer.toString(NUM_SITES));
+                        return true;
+                    }
+                }
+                return false;
+            }
+        });
+
+
+        VoronoiGroup.addActor(VoronoiSettingsLabel);
+        VoronoiGroup.addActor(NumberOfSitesLabel);
+        VoronoiGroup.addActor(NumberOfSitesValue);
+
+        stage.addActor(VoronoiGroup);
     }
 
     private void resizeUI(){
@@ -550,80 +586,91 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         Label PerlinPersistenceLabel = (Label) PerlinGroup.getChild(3);
         TextField PerlinPersistenceValue = (TextField) PerlinGroup.getChild(4);
 
-
+        //Voronoi
+        Label VoronoiSettingsLabel = (Label) VoronoiGroup.getChild(0);
+        Label NumberOfSitesLabel = (Label) VoronoiGroup.getChild(1);
+        TextField NumberOfSitesValue = (TextField) VoronoiGroup.getChild(2);
 
 
         //General Settings
-        generalSettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.95f,
+        generalSettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.80f, Gdx.graphics.getHeight() * 0.95f,
             Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);
 
-        rowLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() *  0.89f,
+        rowLabel.setBounds(Gdx.graphics.getWidth() * 0.91f, Gdx.graphics.getHeight() *  0.89f,
             Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);
-        rowSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.89f,
+        rowSlider.setBounds(Gdx.graphics.getWidth() * 0.80f, Gdx.graphics.getHeight() * 0.89f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
 
-        colSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.92f,
+        colSlider.setBounds(Gdx.graphics.getWidth() * 0.80f, Gdx.graphics.getHeight() * 0.92f,
             Gdx.graphics.getWidth()* 0.1f, Gdx.graphics.getHeight() * 0.03f);
-        colLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() * 0.92f,
+        colLabel.setBounds(Gdx.graphics.getWidth() * 0.91f, Gdx.graphics.getHeight() * 0.92f,
             Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);
 
         generateButton.setBounds(Gdx.graphics.getWidth() * 0.83f, Gdx.graphics.getHeight() * 0.2f,
             Gdx.graphics.getWidth() * 0.06f, Gdx.graphics.getHeight() * 0.06f);
 
-        roomSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.86f,
+        roomSlider.setBounds(Gdx.graphics.getWidth() * 0.80f, Gdx.graphics.getHeight() * 0.86f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
-        roomLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() *  0.86f,
+        roomLabel.setBounds(Gdx.graphics.getWidth() * 0.91f, Gdx.graphics.getHeight() *  0.86f,
             Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);
 
-        generationSelectLabel.setBounds(Gdx.graphics.getWidth() * 0.62f, Gdx.graphics.getHeight() * 0.95f,
+        generationSelectLabel.setBounds(Gdx.graphics.getWidth() * 0.61f, Gdx.graphics.getHeight() * 0.95f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
-        generationSelectBox.setBounds(Gdx.graphics.getWidth() * 0.62f, Gdx.graphics.getHeight() * 0.92f,
+        generationSelectBox.setBounds(Gdx.graphics.getWidth() * 0.61f, Gdx.graphics.getHeight() * 0.92f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
 
         //DLA Settings
-        DLASettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.79f,
+        DLASettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.80f, Gdx.graphics.getHeight() * 0.79f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
 
-        numberOfWalkersLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() * 0.76f,
+        numberOfWalkersLabel.setBounds(Gdx.graphics.getWidth() * 0.91f, Gdx.graphics.getHeight() * 0.76f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
-        numberOfWalkersSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.76f,
-            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
-
-        stickinessLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() * 0.73f,
-            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
-        stickinessSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.73f,
+        numberOfWalkersSlider.setBounds(Gdx.graphics.getWidth() * 0.80f, Gdx.graphics.getHeight() * 0.76f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
 
-        edgeCheckBox.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.70f,
+        stickinessLabel.setBounds(Gdx.graphics.getWidth() * 0.91f, Gdx.graphics.getHeight() * 0.73f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+        stickinessSlider.setBounds(Gdx.graphics.getWidth() * 0.80f, Gdx.graphics.getHeight() * 0.73f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+
+        edgeCheckBox.setBounds(Gdx.graphics.getWidth() * 0.80f, Gdx.graphics.getHeight() * 0.70f,
             Gdx.graphics.getWidth() * 0.08f, Gdx.graphics.getHeight() * 0.03f);
 
-        edgePointNumberLabel.setBounds(Gdx.graphics.getWidth() * 0.86f, Gdx.graphics.getHeight() * 0.67f,
+        edgePointNumberLabel.setBounds(Gdx.graphics.getWidth() * 0.91f, Gdx.graphics.getHeight() * 0.67f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
-        edgePointsNumberSlider.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.67f,
+        edgePointsNumberSlider.setBounds(Gdx.graphics.getWidth() * 0.80f, Gdx.graphics.getHeight() * 0.67f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
 
         //CA Settings
-        CASettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.53f, Gdx.graphics.getHeight() * 0.79f,
+        CASettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.61f, Gdx.graphics.getHeight() * 0.79f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
-        CAIterationLabel.setBounds(Gdx.graphics.getWidth() * 0.64f, Gdx.graphics.getHeight() * 0.76f,
+        CAIterationLabel.setBounds(Gdx.graphics.getWidth() * 0.72f, Gdx.graphics.getHeight() * 0.76f,
+            Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);
+        CAIterationSlider.setBounds(Gdx.graphics.getWidth() * 0.61f, Gdx.graphics.getHeight() * 0.76f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
-        CAIterationSlider.setBounds(Gdx.graphics.getWidth() * 0.53f, Gdx.graphics.getHeight() * 0.76f,
-            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
-        CAPercentageLabel.setBounds(Gdx.graphics.getWidth() * 0.64f, Gdx.graphics.getHeight() * 0.73f,
-            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
-        CAPercentageSlider.setBounds(Gdx.graphics.getWidth() * 0.53f, Gdx.graphics.getHeight() * 0.73f,
+        CAPercentageLabel.setBounds(Gdx.graphics.getWidth() * 0.72f, Gdx.graphics.getHeight() * 0.73f,
+            Gdx.graphics.getWidth() * 0.05f, Gdx.graphics.getHeight() * 0.03f);
+        CAPercentageSlider.setBounds(Gdx.graphics.getWidth() * 0.61f, Gdx.graphics.getHeight() * 0.73f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
 
         //Perlin Settings
-        PerlinSettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.61f,
+        PerlinSettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.80f, Gdx.graphics.getHeight() * 0.61f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
-        PerlinOctavesLabel.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.58f,
+        PerlinOctavesLabel.setBounds(Gdx.graphics.getWidth() * 0.80f, Gdx.graphics.getHeight() * 0.58f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
-        PerlinOctavesValue.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.55f,
+        PerlinOctavesValue.setBounds(Gdx.graphics.getWidth() * 0.80f, Gdx.graphics.getHeight() * 0.55f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
-        PerlinPersistenceLabel.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.52f,
+        PerlinPersistenceLabel.setBounds(Gdx.graphics.getWidth() * 0.80f, Gdx.graphics.getHeight() * 0.52f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
-        PerlinPersistenceValue.setBounds(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.49f,
+        PerlinPersistenceValue.setBounds(Gdx.graphics.getWidth() * 0.80f, Gdx.graphics.getHeight() * 0.49f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+
+        //Voronoi Settings
+        VoronoiSettingsLabel.setBounds(Gdx.graphics.getWidth() * 0.61f, Gdx.graphics.getHeight() * 0.61f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+        NumberOfSitesLabel.setBounds(Gdx.graphics.getWidth() * 0.61f, Gdx.graphics.getHeight() * 0.58f,
+            Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
+        NumberOfSitesValue.setBounds(Gdx.graphics.getWidth() * 0.61f, Gdx.graphics.getHeight() * 0.55f,
             Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.03f);
     }
 
@@ -643,9 +690,13 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
     private void resizeMap(){
         for(int x = 0; x < map.length; x++){
             for(int y = 0; y < map[x].length; y++){
-                map[x][y].getBoundingBox().setPosition(x * Gdx.graphics.getWidth() * 0.004f,
-                    y * Gdx.graphics.getHeight() * 0.0075f);
-                map[x][y].getBoundingBox().setSize(Gdx.graphics.getWidth() * 0.004f, Gdx.graphics.getHeight() * 0.0075f);
+                float posX = x * Gdx.graphics.getWidth() * 0.6f / col;
+                float posY = (float) (y * Gdx.graphics.getHeight()) * 0.99f / row;
+                map[x][y].getBoundingBox().setPosition(posX, posY);
+
+                float width = (Gdx.graphics.getWidth() * 0.6f) / (float) col;
+                float height = (float) Gdx.graphics.getHeight() * 0.99f / (float) row;
+                map[x][y].getBoundingBox().setSize(width, height);
             }
         }
     }
@@ -657,7 +708,6 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         viewport.update(width, height, true);
         batch.setProjectionMatrix(camera.combined);
         shapeRenderer.setProjectionMatrix(camera.combined);
-        System.out.println(map[0][0].getBoundingBox());
     }
 
 

@@ -49,6 +49,9 @@ public class Node implements Cloneable{
     public enum PerlinHeight { DEEP_WATER, WATER, BEACH, GRASSLANDS, FOREST, HILL, MOUNTAIN, SNOWY_MOUNTAIN }
     private PerlinHeight PerlinType;
 
+    // Voronoi parameters
+    private int closestNode;
+
     @ToString.Include
     private Color color;
     private Color foregroundColor;
