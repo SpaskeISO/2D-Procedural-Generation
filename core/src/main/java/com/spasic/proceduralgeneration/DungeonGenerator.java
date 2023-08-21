@@ -3,7 +3,6 @@ package com.spasic.proceduralgeneration;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.scenes.scene2d.ui.List;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,8 +18,8 @@ public class DungeonGenerator {
 
     private dungeonType type;
     //Map
-    private int maxCol = 1600;
-    private int maxRow = 1600;
+    private int maxCol = ProceduralGeneration2D.maxCol;
+    private int maxRow = ProceduralGeneration2D.maxRow;
     private int currentCol;
     private int currentRow;
     //Rooms

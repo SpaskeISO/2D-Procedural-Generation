@@ -162,12 +162,6 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
         batch.dispose();
     }
 
-    private void copyMap(){
-        mapTest =  new Node[col][];
-        for(int i = 0; i < map.length; i++)
-            mapTest[i] = map[i].clone();
-    }
-
 
     public void drawNodes(){
         try{
