@@ -78,7 +78,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
 
     //Perlin
     public static int Octaves = 4; // Adjust this value to control the smoothness of the noise
-    public static float maxPersistence = 1.0f;
+    public static float maxPersistence = Float.MAX_VALUE;
     public static float minPersistence = 0.01f;
     public static float Persistence = 0.5f; // Number of octaves used for generating noise
 

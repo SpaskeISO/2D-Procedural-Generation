@@ -35,7 +35,7 @@ public class DungeonGenerator {
     //Perlin
     public static int[] PerlinPermutations = new int[512];
     public static int Octaves = 4;
-    public static float maxPersistence = 1.0f;
+    public static float maxPersistence = Float.MAX_VALUE;
     public static float minPersistence = Float.MIN_VALUE;
     public static float Persistence = 0.5f;
 
@@ -684,7 +684,7 @@ public class DungeonGenerator {
         for(int i = 0; i < currentCol; i++){
             for(int j = 0; j < currentRow; j++){
                 float normalizedValue = ((noiseMap[i][j]- minValue) / (maxValue - minValue)) * normalizedRange;
-                noiseMap[i][j] = normalizedValue;
+                noiseMap[i][j] = Math.round(normalizedValue);
             }
         }
 
