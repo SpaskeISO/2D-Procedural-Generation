@@ -124,6 +124,8 @@ public class DungeonGenerator {
         this.currentCol = maxCol;
         this.currentRow = maxRow;
         map = new Node[this.maxCol][this.maxRow];
+        DungeonGenerator.Persistence = Persistence;
+        DungeonGenerator.Octaves = Octaves;
         createNodes();
         initializePermutations();
         PerlinGeneration();

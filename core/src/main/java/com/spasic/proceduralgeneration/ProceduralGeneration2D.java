@@ -528,6 +528,7 @@ public class ProceduralGeneration2D extends ApplicationAdapter {
                         if (value < 2) value = 2;
                         NUM_SITES = value;
                         NumberOfSitesValue.setText(Integer.toString(NUM_SITES));
+                        System.out.println(NUM_SITES);
                         return true;
                     }
                 }
